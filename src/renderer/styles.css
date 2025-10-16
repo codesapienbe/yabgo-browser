@@ -20,15 +20,18 @@ html, body {
 
 /* App container */
 .app-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
     width: 100vw;
+    height: 100vh;
     position: relative;
+    overflow: hidden;
 }
 
 /* Custom title bar */
 .title-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     height: 32px;
     display: flex;
@@ -39,6 +42,7 @@ html, body {
     user-select: none;
     border-bottom: 1px solid #1a252f;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    z-index: 1000;
 }
 
 .title-bar-left {
@@ -149,11 +153,13 @@ html, body {
 
 /* Browser content */
 .browser-content {
-    flex: 1;
-    position: relative;
+    position: absolute;
+    top: 32px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: #ffffff;
     overflow: hidden;
-    min-height: 0; /* Fix for flex children */
 }
 
 webview {
