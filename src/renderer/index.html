@@ -21,66 +21,54 @@
             </div>
         </div>
 
-        <!-- Gesture zones (invisible overlays) -->
-        <div class="gesture-zone left-zone" id="leftGesture" title="Swipe right for back"></div>
-        <div class="gesture-zone right-zone" id="rightGesture" title="Swipe left for forward"></div>
-        <div class="gesture-zone top-zone" id="topGesture" title="Swipe down for refresh"></div>
-        <div class="gesture-zone bottom-zone" id="bottomGesture" title="Swipe up for scroll to top"></div>
-
         <!-- Main browser content area -->
         <div class="browser-content">
             <webview 
                 id="webview" 
                 src="about:blank"
                 allowpopups
-                webpreferences="contextIsolation=false"
                 partition="persist:yabgo"
             ></webview>
         </div>
 
-        <!-- Assistant response area -->
-        <div class="assistant-response" id="assistantResponse">
-            <!-- Dynamic content populated by JavaScript -->
-        </div>
+        <!-- Gesture zones (invisible overlays) -->
+        <div class="gesture-zone left-zone" id="leftGesture" title="Swipe right for back"></div>
+        <div class="gesture-zone right-zone" id="rightGesture" title="Swipe left for forward"></div>
+        <div class="gesture-zone top-zone" id="topGesture" title="Swipe down for refresh"></div>
+        <div class="gesture-zone bottom-zone" id="bottomGesture" title="Swipe up for scroll to top"></div>
 
-        <!-- Unified input container -->
-        <div class="input-container" id="inputContainer">
-            <div class="input-wrapper">
-                <input 
-                    type="text" 
-                    class="unified-input" 
-                    id="unifiedInput" 
-                    placeholder="Enter URL like github.com or search anything..."
-                    autocomplete="off"
-                    spellcheck="false"
-                >
-                <button class="input-btn" id="inputBtn" title="Navigate or search">
-                    <span class="input-icon">→</span>
-                </button>
-            </div>
-            <div class="input-suggestions" id="inputSuggestions">
-                <!-- Dynamic suggestions -->
-            </div>
-        </div>
+        <!-- Glassmorphic overlays -->
+        <div class="glass-overlay bottom">
+            <!-- Assistant response area -->
+            <div class="assistant-response" id="assistantResponse"></div>
 
-        <!-- Floating action button -->
-        <div class="floating-button" id="floatingButton" title="Click to search or navigate">
-            <span class="floating-icon">🔍</span>
-            <div class="floating-pulse"></div>
+            <!-- Unified input container -->
+            <div class="input-container" id="inputContainer">
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        class="unified-input"
+                        id="unifiedInput"
+                        placeholder="Enter URL or search..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <button class="input-btn" id="inputBtn" title="Go">→</button>
+                </div>
+            </div>
+
+            <!-- Floating action button -->
+            <div class="floating-button" id="floatingButton" title="Search">
+                <span class="floating-icon">🔍</span>
+            </div>
         </div>
 
         <!-- Loading indicator -->
         <div class="loading-indicator" id="loadingIndicator">
             <div class="loading-bar"></div>
         </div>
-
-        <!-- Status bar (optional) -->
-        <div class="status-bar" id="statusBar">
-            <span class="status-text" id="statusText"></span>
-        </div>
     </div>
 
-    <!-- Include the compiled TypeScript -->
     <script src="renderer.bundle.js"></script>
 </body>
 </html>

@@ -43,10 +43,8 @@ export class WindowManager {
         this.mainWindow.loadFile(htmlPath);
         this.mainWindow.setMenuBarVisibility(false);
 
-        // Development mode
-        if (process.env.NODE_ENV === 'development') {
-            this.mainWindow.webContents.openDevTools();
-        }
+        // Always open DevTools to debug layout issues
+        this.mainWindow.webContents.openDevTools();
 
         this.setupWindowEvents();
 
