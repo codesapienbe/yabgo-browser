@@ -53,7 +53,7 @@ const yabgoAPI: YabgoAPI = {
 
     // Event listeners
     onWindowEvent: (callback: (event: string, data?: any) => void) => {
-        const handleEvent = (event: IpcRendererEvent, eventName: string, data?: any) => {
+        const handleEvent = (_event: IpcRendererEvent, eventName: string, data?: any) => {
             callback(eventName, data);
         };
         ipcRenderer.on('window-event', handleEvent);
@@ -73,3 +73,6 @@ declare global {
         yabgo: YabgoAPI;
     }
 }
+
+// Export to make this file a module
+export {};

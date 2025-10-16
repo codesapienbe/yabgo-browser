@@ -3,9 +3,10 @@ import { HistoryManager } from './HistoryManager';
 import { Logger } from '../../shared/utils/Logger';
 
 /**
- * Manages assistant interactions in renderer process
+ * Manages assistant interactions in a renderer process
  */
 export class AssistantManager extends EventEmitter {
+    // @ts-expect-error - Reserved for future use
     private historyManager: HistoryManager;
     private logger: Logger;
     private isProcessing: boolean = false;

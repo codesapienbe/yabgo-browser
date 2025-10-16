@@ -2,10 +2,10 @@
   "name": "yabgo-browser",
   "version": "1.0.0",
   "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant",
-  "main": "dist/main.js",
+  "main": "dist/main/main.js",
   "scripts": {
     "start": "npm run build && electron .",
-    "dev": "concurrently \"npm run build:watch\" \"wait-on dist/main.js && electron .\"",
+    "dev": "concurrently \"npm run build:watch\" \"wait-on dist/main/main.js && electron .\"",
     "build": "npm run build:main && npm run build:renderer",
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "tsc -p tsconfig.renderer.json && npm run copy:assets",

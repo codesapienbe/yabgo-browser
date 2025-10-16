@@ -1,5 +1,5 @@
 import { DatabaseManager } from '../managers/DatabaseManager';
-import { AssistantResponse, PageMetadata } from '../../shared/types/DataTypes';
+import { AssistantResponse } from '../../shared/types/DataTypes';
 import { Logger } from '../../shared/utils/Logger';
 
 /**

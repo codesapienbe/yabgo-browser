@@ -1,5 +1,5 @@
 /**
- * Simple event emitter implementation for renderer process
+ * Simple event emitter implementation for a renderer process
  */
 
 export class EventEmitter {
@@ -50,7 +50,7 @@ export class EventEmitter {
     }
 
     /**
-     * Remove all listeners for event
+     * Remove all listeners
      */
     public removeAllListeners(event?: string): void {
         if (event) {
@@ -58,12 +58,5 @@ export class EventEmitter {
         } else {
             this.events.clear();
         }
-    }
-
-    /**
-     * Get listener count for event
-     */
-    public listenerCount(event: string): number {
-        return this.events.get(event)?.length || 0;
     }
 }

@@ -45,7 +45,7 @@ export class IPCManager {
      * Handle saving page metadata
      */
     private async handleSaveMetadata(
-        event: IpcMainInvokeEvent,
+        _event: IpcMainInvokeEvent,
         metadata: PageMetadata
     ): Promise<{ success: boolean; error?: string }> {
         try {
@@ -64,7 +64,7 @@ export class IPCManager {
      * Handle getting browsing history
      */
     private async handleGetHistory(
-        event: IpcMainInvokeEvent,
+        _event: IpcMainInvokeEvent,
         limit: number = 50
     ): Promise<PageMetadata[]> {
         try {
@@ -78,7 +78,7 @@ export class IPCManager {
     /**
      * Handle getting database statistics
      */
-    private async handleGetStatistics(event: IpcMainInvokeEvent): Promise<{ totalPages: number; totalVisits: number }> {
+    private async handleGetStatistics(_event: IpcMainInvokeEvent): Promise<{ totalPages: number; totalVisits: number }> {
         try {
             return this.databaseManager.getStatistics();
         } catch (error) {
@@ -91,7 +91,7 @@ export class IPCManager {
      * Handle assistant queries
      */
     private async handleAssistantQuery(
-        event: IpcMainInvokeEvent,
+        _event: IpcMainInvokeEvent,
         query: string
     ): Promise<AssistantResponse> {
         try {
@@ -108,21 +108,21 @@ export class IPCManager {
     /**
      * Handle window minimize
      */
-    private async handleMinimizeWindow(event: IpcMainInvokeEvent): Promise<void> {
+    private async handleMinimizeWindow(_event: IpcMainInvokeEvent): Promise<void> {
         this.windowManager.minimizeWindow();
     }
 
     /**
      * Handle window maximize/restore
      */
-    private async handleMaximizeWindow(event: IpcMainInvokeEvent): Promise<void> {
+    private async handleMaximizeWindow(_event: IpcMainInvokeEvent): Promise<void> {
         this.windowManager.toggleMaximizeWindow();
     }
 
     /**
      * Handle window close
      */
-    private async handleCloseWindow(event: IpcMainInvokeEvent): Promise<void> {
+    private async handleCloseWindow(_event: IpcMainInvokeEvent): Promise<void> {
         this.windowManager.closeWindow();
     }
 }

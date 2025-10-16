@@ -37,7 +37,10 @@ export class WindowManager {
 
         this.mainWindow = new BrowserWindow(config);
 
-        this.mainWindow.loadFile(path.join(__dirname, '../index.html'));
+        // Load the HTML file from the correct location
+        const htmlPath = path.join(__dirname, '../../index.html');
+        this.logger.info(`Loading HTML from: ${htmlPath}`);
+        this.mainWindow.loadFile(htmlPath);
         this.mainWindow.setMenuBarVisibility(false);
 
         // Development mode

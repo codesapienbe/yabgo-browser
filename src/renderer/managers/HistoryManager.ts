@@ -1,6 +1,6 @@
 import { EventEmitter } from '../utils/EventEmitter';
 import { Logger } from '../../shared/utils/Logger';
-import { PageMetadata } from '../../shared/types/DataTypes';
+import type { PageMetadata } from '../../shared/types/DataTypes';
 
 /**
  * Manages browsing history in renderer process
@@ -28,7 +28,7 @@ export class HistoryManager extends EventEmitter {
     private async loadHistory(): Promise<void> {
         try {
             const history = await window.yabgo.getHistory(50);
-            this.localHistory = history.map(item => item.url);
+            this.localHistory = history.map((item: PageMetadata) => item.url);
             this.logger.debug(`Loaded ${history.length} history items`);
         } catch (error) {
             this.logger.error('Error loading history:', error);

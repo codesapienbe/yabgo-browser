@@ -1,5 +1,4 @@
 import { app, BrowserWindow } from 'electron';
-import * as path from 'path';
 import { WindowManager } from './managers/WindowManager';
 import { DatabaseManager } from './managers/DatabaseManager';
 import { IPCManager } from './managers/IPCManager';
@@ -10,7 +9,7 @@ import { Logger } from '../shared/utils/Logger';
  */
 class YabgoApp {
     private windowManager: WindowManager;
-    private databaseManager: DatabaseManager;
+    private readonly databaseManager: DatabaseManager;
     private ipcManager: IPCManager;
     private logger: Logger;
 

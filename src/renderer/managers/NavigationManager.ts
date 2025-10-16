@@ -153,58 +153,8 @@ export class NavigationManager extends EventEmitter {
      */
     public loadDefaultPage(): void {
         if (!this.webview) return;
-
-        this.webview.addEventListener('dom-ready', () => {
-            if (this.webview?.src === 'about:blank') {
-                this.webview.executeJavaScript(`
-                    document.body.innerHTML = \`
-                        <style>
-                            body {
-                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                                display: flex;
-                                flex-direction: column;
-                                align-items: center;
-                                justify-content: center;
-                                height: 100vh;
-                                margin: 0;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                                text-align: center;
-                            }
-                            h1 { 
-                                font-size: 64px; 
-                                margin: 20px; 
-                                text-shadow: 2px 2px 4px rgba(0,0,0,0.3); 
-                            }
-                            p { 
-                                font-size: 20px; 
-                                opacity: 0.95; 
-                                margin: 10px 0;
-                            }
-                            .subtitle { 
-                                font-size: 14px; 
-                                margin-top: 40px; 
-                                opacity: 0.8; 
-                            }
-                            .feature {
-                                font-size: 16px;
-                                margin: 5px 0;
-                                opacity: 0.9;
-                            }
-                        </style>
-                        <h1>🚀 YABGO</h1>
-                        <p>Yet Another Browser to Go and Visit</p>
-                        <div class="feature">✨ Gesture Navigation</div>
-                        <div class="feature">🤖 AI Assistant</div>
-                        <div class="feature">🎯 Minimal Interface</div>
-                        <p class="subtitle">Enter a URL or search query below</p>
-                        <p class="subtitle">Use corner gestures for navigation</p>
-                    \`;
-                `);
-            }
-        });
-
-        this.logger.info('Default page loaded');
+        this.navigate('https://perplexity.ai');
+        this.logger.info('Default page loaded: perplexity.ai');
     }
 
     /**

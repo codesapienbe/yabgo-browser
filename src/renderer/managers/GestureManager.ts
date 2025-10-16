@@ -6,6 +6,7 @@ import { Logger } from '../../shared/utils/Logger';
  * Manages gesture recognition and handling
  */
 export class GestureManager extends EventEmitter {
+    // @ts-expect-error - Reserved for future use
     private navigationManager: NavigationManager;
     private gestureZones: Map<string, HTMLElement> = new Map();
     private isGesturing: boolean = false;
@@ -13,7 +14,6 @@ export class GestureManager extends EventEmitter {
     private logger: Logger;
 
     private readonly GESTURE_THRESHOLD = 50; // minimum distance for gesture
-    private readonly ZONE_SIZE = 80; // gesture zone size
 
     constructor(navigationManager: NavigationManager) {
         super();
@@ -66,12 +66,12 @@ export class GestureManager extends EventEmitter {
      */
     private setupZoneHandlers(element: HTMLElement, position: string): void {
         // Mouse events (desktop)
-        element.addEventListener('mousedown', (e) => {
+        element.addEventListener('mousedown', (e: MouseEvent) => {
             this.handleGestureStart(e.clientX, e.clientY, element, position);
         });
 
         // Touch events (mobile)
-        element.addEventListener('touchstart', (e) => {
+        element.addEventListener('touchstart', (e: TouchEvent) => {
             const touch = e.touches[0];
             this.handleGestureStart(touch.clientX, touch.clientY, element, position);
         });
