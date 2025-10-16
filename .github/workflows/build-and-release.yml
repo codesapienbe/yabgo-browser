@@ -8,15 +8,16 @@ on:
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
+
+      - name: Prepare system for Windows builds (wine, nsis, tools)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends wine64 wine32 cabextract icoutils p7zip-full nsis
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -27,22 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build application (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Build application (Linux + Windows)
         run: npm run build
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build application (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          npm run clean
-          npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifacts (Linux)
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: linux-builds
@@ -52,7 +43,6 @@ jobs:
             release/*.rpm
 
       - name: Upload artifacts (Windows)
-        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: windows-builds
@@ -64,7 +54,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4

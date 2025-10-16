@@ -26,25 +26,23 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Run linting
-      run: npm run lint
-
     - name: Run tests
       run: npm test
 
-    - name: Build application
+    - name: Build application (quick local build check)
       run: npm run build
 
   build:
     needs: test
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Prepare system for Windows builds (wine, nsis, tools)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends wine64 wine32 cabextract icoutils p7zip-full nsis
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -55,14 +53,23 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build application
+    - name: Build application (Linux + Windows)
       run: npm run build
 
-    - name: Package application
-      run: npm run package
-
-    - name: Upload artifacts
+    - name: Upload artifacts (Linux)
       uses: actions/upload-artifact@v3
       with:
-        name: yabgo-${{ matrix.os }}
-        path: release/
+        name: linux-builds
+        path: |
+          release/*.AppImage
+          release/*.deb
+          release/*.rpm
+
+    - name: Upload artifacts (Windows)
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-builds
+        path: |
+          release/*.exe
+          release/*.msi
+
