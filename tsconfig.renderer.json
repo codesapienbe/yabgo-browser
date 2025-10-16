@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "lib": [
+      "dom",
+      "dom.iterable"
+    ]
+  },
+  "include": [
+    "src/renderer/**/*",
+    "src/shared/**/*"
+  ],
+  "exclude": [
+    "src/main/**/*"
+  ]
+}
