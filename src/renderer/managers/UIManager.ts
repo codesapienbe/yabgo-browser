@@ -71,9 +71,51 @@ export class UIManager extends EventEmitter {
         const maximizeBtn = document.getElementById('maximizeBtn');
         const closeBtn = document.getElementById('closeBtn');
 
-        minimizeBtn?.addEventListener('click', () => window.yabgo.minimizeWindow());
-        maximizeBtn?.addEventListener('click', () => window.yabgo.maximizeWindow());
-        closeBtn?.addEventListener('click', () => window.yabgo.closeWindow());
+        if (!minimizeBtn || !maximizeBtn || !closeBtn) {
+            this.logger.error('Window control buttons not found');
+            return;
+        }
+
+        minimizeBtn.addEventListener('click', async () => {
+            try {
+                if (window.yabgo && window.yabgo.minimizeWindow) {
+                    await window.yabgo.minimizeWindow();
+                    this.logger.info('Window minimized');
+                } else {
+                    this.logger.error('window.yabgo.minimizeWindow is not available');
+                }
+            } catch (error) {
+                this.logger.error('Failed to minimize window:', error);
+            }
+        });
+
+        maximizeBtn.addEventListener('click', async () => {
+            try {
+                if (window.yabgo && window.yabgo.maximizeWindow) {
+                    await window.yabgo.maximizeWindow();
+                    this.logger.info('Window maximized/restored');
+                } else {
+                    this.logger.error('window.yabgo.maximizeWindow is not available');
+                }
+            } catch (error) {
+                this.logger.error('Failed to maximize window:', error);
+            }
+        });
+
+        closeBtn.addEventListener('click', async () => {
+            try {
+                if (window.yabgo && window.yabgo.closeWindow) {
+                    await window.yabgo.closeWindow();
+                    this.logger.info('Window closed');
+                } else {
+                    this.logger.error('window.yabgo.closeWindow is not available');
+                }
+            } catch (error) {
+                this.logger.error('Failed to close window:', error);
+            }
+        });
+
+        this.logger.info('Window controls initialized');
     }
 
     /**

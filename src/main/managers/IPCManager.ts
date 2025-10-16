@@ -14,10 +14,11 @@ export class IPCManager {
     private windowManager: WindowManager;
     private logger: Logger;
 
-    constructor(databaseManager: DatabaseManager) {
+    constructor(databaseManager: DatabaseManager, windowManager: WindowManager) {
         this.databaseManager = databaseManager;
         this.assistantService = new AssistantService(databaseManager);
-        this.windowManager = new WindowManager();
+        // Use the WindowManager instance provided by the app instead of creating a new one
+        this.windowManager = windowManager;
         this.logger = new Logger('IPCManager');
     }
 

@@ -19,7 +19,8 @@ class YabgoApp {
 
         this.databaseManager = new DatabaseManager();
         this.windowManager = new WindowManager();
-        this.ipcManager = new IPCManager(this.databaseManager);
+        // Pass the existing WindowManager instance into IPCManager
+        this.ipcManager = new IPCManager(this.databaseManager, this.windowManager);
     }
 
     /**

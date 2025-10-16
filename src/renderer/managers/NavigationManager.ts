@@ -57,8 +57,16 @@ export class NavigationManager extends EventEmitter {
         });
 
         this.webview.addEventListener('dom-ready', () => {
-            this.setupScrollDetection();
+            // Only setup scroll detection for actual pages, not about:blank
+            if (this.webview && this.webview.src && !this.webview.src.startsWith('about:')) {
+                this.setupScrollDetection();
+            }
         });
+
+        // Load default page on initialization
+        setTimeout(() => {
+            this.loadDefaultPage();
+        }, 100);
     }
 
     /**
