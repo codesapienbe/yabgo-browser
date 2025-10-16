@@ -19,4 +19,4 @@ clean:
 	npm run clean
 
 release:
-	@./scripts/release.sh --publish
+	@./scripts/release.sh

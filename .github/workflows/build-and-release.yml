@@ -12,8 +12,8 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    
+        os: [ubuntu-latest, windows-latest]
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '20.x'
           cache: 'npm'
 
       - name: Install dependencies
@@ -38,14 +38,6 @@ jobs:
         run: |
           npm run clean
           npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build application (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          npm run clean
-          npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -68,15 +60,6 @@ jobs:
             release/*.exe
             release/*.msi
 
-      - name: Upload artifacts (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-builds
-          path: |
-            release/*.dmg
-            release/*.zip
-
   create-release:
     needs: release
     runs-on: ubuntu-latest
@@ -95,7 +78,6 @@ jobs:
           files: |
             linux-builds/*
             windows-builds/*
-            macos-builds/*
           generate_release_notes: true
           draft: false
           prerelease: false

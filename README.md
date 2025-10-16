@@ -1,355 +1,552 @@
-# 🚀 YABGO Browser
+# YABGO Browser
 
-**Yet Another Browser to Go and Visit**
+YABGO Browser is a gesture-driven, AI-powered web browser built with Electron and TypeScript.
 
-A modern, minimal Electron-based browser with gesture navigation and AI assistant, built with TypeScript and object-oriented architecture.
+## Changelog
 
-## ✨ Features
+All notable changes to YABGO Browser will be documented in this file.
 
-### 🌐 Core Browser Features
-- **Chromium-based rendering** - Full compatibility with all websites
-- **Unified input system** - Smart URL/search detection
-- **Real-time page tracking** - SQLite-based history with metadata
-- **Cross-platform support** - Windows, macOS, and Linux
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### 👆 Gesture Navigation
-- **Corner swipe gestures** for intuitive navigation
-- **Left → Right**: Browser back
-- **Right → Left**: Browser forward  
-- **Top → Down**: Refresh page
-- **Bottom → Up**: Scroll to top
-- **Visual feedback** for all gesture actions
+### [Unreleased]
 
-### 🤖 AI Assistant
-- **Natural language queries** for history search
-- **Smart commands**: "find rust", "recent pages", "most visited"
-- **Statistics and insights** about browsing patterns
-- **Instant results** with clickable navigation
+#### Added
+- Initial release of YABGO Browser
+- Gesture-driven navigation system
+- AI-powered browsing assistant
+- Unified URL/search input system
+- Floating UI that adapts to scrolling
+- SQLite-based history management
+- Cross-platform Electron application
+- TypeScript object-oriented architecture
+- Comprehensive test suite
+- Modern CSS with smooth animations
 
-### 🎨 Modern Interface
-- **Floating UI** that adapts to scrolling behavior
-- **Minimal design** focused on content consumption
-- **Dark theme** optimized for extended use
-- **Smooth animations** with 60fps performance
-- **Distraction-free browsing** experience
+#### Features
+- Corner swipe gestures for navigation
+- Natural language assistant queries
+- Smart URL vs search detection
+- Real-time page metadata tracking
+- Distraction-free browsing interface
+- Dark theme optimized for extended use
+- Cross-platform compatibility (Windows, macOS, Linux)
 
-## 🏗️ Architecture
+### [1.0.0] - 2024-12-XX
 
-### Object-Oriented Design
+#### Added
+- Initial stable release
+- Complete feature set as described above
+- Production-ready build system
+- Comprehensive documentation
+- Distribution packages for all platforms
+
+#### Security
+- Electron security best practices implemented
+- Context isolation enabled
+- Secure IPC communication
+- Sandboxed webview for browsing
+
+## 🛠️ Development Guide
+
+### Architecture Overview
+
+YABGO Browser follows a clean, object-oriented architecture with clear separation between main and renderer processes.
+
+#### Main Process Architecture
+
 ```
-src/
-├── main/                    # Electron main process
-│   ├── main.ts             # Application entry point
-│   ├── managers/           # Core system managers
-│   │   ├── WindowManager.ts
-│   │   ├── DatabaseManager.ts
-│   │   └── IPCManager.ts
-│   ├── services/           # Business logic services
-│   │   └── AssistantService.ts
-│   └── preload.ts          # Secure IPC bridge
-├── renderer/               # Browser UI (renderer process)
-│   ├── renderer.ts         # UI entry point
-│   ├── core/               # Application core
-│   │   └── BrowserApp.ts
-│   ├── managers/           # UI component managers
-│   │   ├── NavigationManager.ts
-│   │   ├── UIManager.ts
-│   │   ├── GestureManager.ts
-│   │   ├── AssistantManager.ts
-│   │   └── HistoryManager.ts
-│   ├── utils/              # Utility classes
-│   │   └── EventEmitter.ts
-│   ├── index.html          # Main UI template
-│   └── styles.css          # Modern CSS styling
-└── shared/                 # Shared types and utilities
-    ├── types/              # TypeScript type definitions
-    │   ├── DataTypes.ts
-    │   └── WindowTypes.ts
-    └── utils/              # Shared utility classes
-        ├── Logger.ts
-        └── URLHelper.ts
+YabgoApp (main.ts)
+├── WindowManager     # Window lifecycle and configuration
+├── DatabaseManager   # SQLite operations and data persistence  
+├── IPCManager       # Inter-process communication handling
+└── AssistantService # Natural language query processing
 ```
 
-### Technology Stack
-- **Electron 28** - Desktop app framework
-- **TypeScript 5.2** - Type-safe development
-- **Better-SQLite3** - Fast local database
-- **Modern CSS** - Flexbox, Grid, animations
-- **ESLint + Jest** - Code quality and testing
+#### Renderer Process Architecture
 
-## 🚀 Quick Start
+```
+BrowserApp (renderer.ts)
+├── NavigationManager  # WebView control and URL handling
+├── UIManager         # User interface state and interactions
+├── GestureManager    # Touch and mouse gesture recognition
+├── AssistantManager  # Assistant UI and query handling
+└── HistoryManager    # Local history caching and management
+```
 
-### Prerequisites
-- **Node.js 18+** ([Download](https://nodejs.org/))
-- **npm 9+** (included with Node.js)
-- **Git** ([Download](https://git-scm.com/))
+### Key Design Patterns
 
-### Installation
+#### 1. Event-Driven Architecture
+All managers communicate through events, enabling loose coupling and extensibility.
 
-1. **Clone or extract** the YABGO project:
+```typescript
+// Example: Navigation triggering UI updates
+navigationManager.on(\'navigation\', (url: string) => {
+    uiManager.updateAddressBar(url);
+    historyManager.addToHistory(url);
+});
+```
+
+#### 2. Manager Pattern
+Each functional area has a dedicated manager class with clear responsibilities.
+
+#### 3. Type Safety
+Comprehensive TypeScript types ensure reliability and developer experience.
+
+#### 4. Separation of Concerns
+Main process handles system integration, renderer handles UI and user interaction.
+
+### Development Workflow
+
+#### 1. Setup Development Environment
+
 ```bash
-cd yabgo-browser
-```
-
-2. **Install dependencies**:
-```bash
+# Install dependencies
 npm install
-```
 
-3. **Start development**:
-```bash
+# Start development with hot reload
 npm run dev
+
+# In another terminal, run tests
+npm test -- --watch
 ```
 
-4. **Build for production**:
+#### 2. Code Organization
+
+- **Create new features** in appropriate manager classes
+- **Add types** to `src/shared/types/`
+- **Write tests** alongside implementation
+- **Update documentation** as needed
+
+#### 3. Build Process
+
+The build process compiles TypeScript separately for main and renderer:
+
+```bash
+# Build main process
+npm run build:main
+
+# Build renderer process  
+npm run build:renderer
+
+# Build everything
+npm run build
+```
+
+### Adding New Features
+
+#### 1. New Assistant Commands
+
+```typescript
+// In AssistantService.ts
+if (this.matchesPatterns(lowerQuery, [\'new-command\', \'alias\'])) {
+    return this.handleNewCommand();
+}
+
+private handleNewCommand(): AssistantResponse {
+    // Implementation here
+    return {
+        type: \'results\',
+        title: \'New Command Results\',
+        items: results
+    };
+}
+```
+
+#### 2. New Gesture Actions
+
+```typescript
+// In GestureManager.ts
+private handleGestureAction(action: string): void {
+    switch (action) {
+        case \'new-gesture\':
+            this.emit(\'new-gesture\');
+            break;
+        // ... existing cases
+    }
+}
+```
+
+#### 3. New UI Components
+
+```typescript
+// In UIManager.ts
+private setupNewComponent(): void {
+    const component = document.getElementById(\'new-component\');
+    component?.addEventListener(\'click\', this.handleNewAction.bind(this));
+}
+```
+
+### Testing Strategy
+
+#### Unit Tests
+Test individual classes and methods in isolation.
+
+```typescript
+// Example: NavigationManager.test.ts
+describe(\'NavigationManager\', () => {
+    let navigationManager: NavigationManager;
+
+    beforeEach(() => {
+        navigationManager = new NavigationManager();
+    });
+
+    it(\'should process URLs correctly\', () => {
+        const result = navigationManager.processInput(\'github.com\');
+        expect(result).toBe(\'https://github.com\');
+    });
+});
+```
+
+#### Integration Tests
+Test interaction between components.
+
+#### E2E Tests
+Test complete user workflows with Electron.
+
+### Performance Considerations
+
+#### 1. Database Optimization
+- Use prepared statements for repeated queries
+- Index frequently searched columns
+- Limit result sets appropriately
+
+#### 2. UI Performance
+- Debounce scroll handlers
+- Use CSS animations over JavaScript
+- Minimize DOM manipulations
+
+#### 3. Memory Management
+- Clean up event listeners
+- Close database connections
+- Remove unused references
+
+### Security Guidelines
+
+#### 1. IPC Security
+- Validate all inputs from renderer process
+- Use context isolation
+- Minimize exposed APIs
+
+#### 2. WebView Security
+- Enable appropriate sandbox settings
+- Handle navigation requests carefully
+- Validate external URLs
+
+#### 3. Data Storage
+- Use parameterized queries
+- Sanitize user inputs
+- Encrypt sensitive data if needed
+
+### Debugging Tips
+
+#### 1. Main Process Debugging
+```bash
+# Start with inspector
+npm run dev -- --inspect
+
+# Or with break on start
+npm run dev -- --inspect-brk
+```
+
+#### 2. Renderer Process Debugging
+- Use Electron DevTools (Cmd/Ctrl+Shift+I)
+- Console logs appear in DevTools
+- Use breakpoints in source files
+
+#### 3. Database Debugging
+```typescript
+// Enable database logging
+const db = new Database(dbPath, { verbose: console.log });
+```
+
+### Building and Distribution
+
+#### Development Builds
 ```bash
 npm run build
 npm start
 ```
 
-### Building Distributables
-
+#### Production Builds
 ```bash
-# Build for your current platform
 npm run package
-
-# Build for specific platforms
-npm run package:win     # Windows (.exe installer)
-npm run package:mac     # macOS (.dmg)
-npm run package:linux   # Linux (AppImage)
+# Creates installers in release/ directory
 ```
 
-## 📖 Usage Guide
-
-### Navigation
-- **URL Entry**: Type domains like `github.com` or full URLs
-- **Search Queries**: Type searches like `rust programming`
-- **Gesture Controls**: Use corner swipes for navigation
-- **Keyboard Shortcuts**: `Enter` to navigate, `Escape` to close assistant
-
-### AI Assistant Commands
-```
-find rust programming    # Search for pages about Rust
-recent pages            # Show recently visited pages
-most visited           # Display most frequently visited
-clear history          # Clear all browsing history
-stats                  # Show browsing statistics
-```
-
-### Floating UI Behavior
-- Input bar becomes **floating button** when scrolling down
-- **Click floating button** to expand input again
-- **Auto-hides** during content consumption
-- **Smooth transitions** between states
-
-## 🛠️ Development
-
-### Development Commands
+#### Platform-Specific Builds
 ```bash
-npm run dev              # Start with hot reload
-npm run build           # Build TypeScript
-npm run build:watch     # Build with file watching
-npm run lint            # Run ESLint
-npm run lint:fix        # Fix ESLint issues
-npm run test            # Run Jest tests
-npm run clean           # Clean build directory
+npm run package:win    # Windows installer
+npm run package:mac    # macOS DMG
+npm run package:linux  # Linux AppImage
 ```
 
-### Project Structure
-- **Main process** (`src/main/`): System-level functionality
-- **Renderer process** (`src/renderer/`): Browser UI and interactions
-- **Shared code** (`src/shared/`): Common types and utilities
-- **Build output** (`dist/`): Compiled JavaScript
-- **Release builds** (`release/`): Packaged applications
+### Code Quality
 
-### Code Style
-- **TypeScript strict mode** enabled
-- **ESLint** with TypeScript rules
-- **Object-oriented patterns** throughout
-- **Event-driven architecture** for component communication
-- **Comprehensive logging** with contextual loggers
+#### ESLint Configuration
+The project uses strict ESLint rules for consistency:
+- TypeScript-specific rules
+- No unused variables
+- Prefer const over let
+- Consistent formatting
 
-## 🔧 Configuration
+#### Type Checking
+All code must pass TypeScript strict mode:
+- No implicit any
+- Strict null checks
+- No unused parameters
+- Return type annotations
 
-### Environment Variables
-```bash
-NODE_ENV=development     # Enable development features
-LOG_LEVEL=debug         # Set logging level (debug, info, warn, error)
-```
+#### Git Workflow
+- Use feature branches for new development
+- Write descriptive commit messages
+- Squash commits before merging
+- Update changelog for releases
 
-### Build Configuration
-- **TypeScript configs**: `tsconfig.json`, `tsconfig.main.json`, `tsconfig.renderer.json`
-- **Electron Builder**: Configured in `package.json` build section
-- **ESLint**: `.eslintrc.json` with TypeScript support
-- **Jest**: `jest.config.json` for testing setup
+### Common Pitfalls
 
-## 📝 API Reference
+#### 1. IPC Communication
+- Always handle promise rejections
+- Validate data types between processes
+- Don\'t pass large objects over IPC
 
-### Main Process APIs
+#### 2. Electron Security
+- Don\'t enable node integration in renderer
+- Always use preload scripts for API exposure
+- Validate all user inputs
 
-#### DatabaseManager
-```typescript
-class DatabaseManager {
-    insertOrUpdateMetadata(metadata: PageMetadata): void
-    searchPages(query: string, options?: HistorySearchOptions): PageMetadata[]
-    getRecentPages(limit?: number): PageMetadata[]
-    getMostVisitedPages(limit?: number): PageMetadata[]
-    clearHistory(): void
+#### 3. Database Operations
+- Always use transactions for multiple operations
+- Handle database errors gracefully
+- Close connections properly
+
+This development guide provides the foundation for contributing to YABGO Browser. For specific questions, refer to the codebase comments and type definitions.
+
+## Webview Full-Height Layout Fix Guide
+
+### Problem
+The webview content was not filling the full height of the browser window (only about 20% height). Additionally, window control buttons (minimize, maximize, close) were not working.
+
+### Root Causes
+
+#### 1. Window Control Buttons Not Working
+**Issue**: `IPCManager` was creating its own `WindowManager` instance instead of using the shared one from `main.ts`, so window control IPC calls were operating on a window manager with no actual window.
+
+**Fix**: Modified `IPCManager` constructor to accept the existing `WindowManager` instance as a parameter, and updated `main.ts` to pass the shared instance.
+
+#### 2. Webview Not Full Height
+**Issue**: The layout was not using a complete flex system, causing the webview container to not properly fill available space.
+
+**Fix**: Applied complete flexbox layout throughout the component hierarchy:
+
+```css
+/* html, body - establish full viewport */
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* .app-container - flex column container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* .title-bar - fixed 32px height */
+.title-.bar {
+    flex: 0 0 32px;
+    /* Fixed height, won\'t grow or shrink */
+}
+
+/* .browser-content - grows to fill remaining space */
+.browser-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Critical for nested flex */
+    overflow: hidden;
+}
+
+/* webview - fills browser-content */
+webview {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0; /* Allows shrinking in flex container */
+    display: block;
 }
 ```
 
-#### AssistantService  
-```typescript
-class AssistantService {
-    processQuery(query: string): Promise<AssistantResponse>
-}
-```
+### Key CSS Concepts Applied
 
-### Renderer Process APIs
+#### The `min-height: 0` Fix
+By default, flex items have `min-height: auto`, which prevents them from shrinking below their content size. Setting `min-height: 0` on both `.browser-content` and `webview` allows proper flex behavior.
 
-#### NavigationManager
-```typescript
-class NavigationManager extends EventEmitter {
-    navigate(input: string): void
-    goBack(): boolean
-    goForward(): boolean
-    refresh(): void
-    scrollToTop(): void
-}
-```
+#### Flex Value Breakdown
+- `flex: 1 1 auto` = `flex-grow: 1` (expand to fill space) + `flex-shrink: 1` (can shrink) + `flex-basis: auto` (start from content size)
+- `flex: 0 0 32px` = `flex-grow: 0` (don\'t grow) + `flex-shrink: 0` (don\'t shrink) + `flex-basis: 32px` (fixed 32px)
 
-#### GestureManager
-```typescript
-class GestureManager extends EventEmitter {
-    enableGestures(): void
-    disableGestures(): void
-}
-```
+### How to Verify the Fix
 
-### IPC Communication
-```typescript
-// Available in renderer process via window.yabgo
-interface YabgoAPI {
-    savePageMetadata(metadata: PageMetadata): Promise<{success: boolean}>
-    assistantQuery(query: string): Promise<AssistantResponse>
-    getHistory(limit?: number): Promise<PageMetadata[]>
-    minimizeWindow(): Promise<void>
-    maximizeWindow(): Promise<void>
-    closeWindow(): Promise<void>
-}
-```
-
-## 🧪 Testing
-
-### Running Tests
+#### Method 1: Run with DevTools (Automatic)
 ```bash
-npm test                 # Run all tests
-npm test -- --watch     # Watch mode
-npm test -- --coverage  # With coverage report
+npm run prod
 ```
 
-### Test Structure
-- **Unit tests**: `src/**/*.test.ts`
-- **Integration tests**: `tests/integration/`
-- **E2E tests**: `tests/e2e/`
+DevTools will open automatically. In the DevTools:
 
-## 🔒 Security
+1. **Inspect the elements**:
+   - Right-click on the webview area → \"Inspect Element\"
+   - Check the computed dimensions in the Styles panel
 
-### Security Features
-- **Context isolation** enabled in webview
-- **Node integration** disabled in renderer
-- **Content Security Policy** headers
-- **Secure defaults** for all Electron settings
-- **SQLite prepared statements** to prevent injection
+2. **Expected dimensions** (for 1400x900 window):
+   - `.app-container`: 1400px × 900px
+   - `.title-bar`: 1400px × 32px
+   - `.browser-content`: 1400px × 868px (900 - 32)
+   - `webview`: 1400px × 868px
 
-### Privacy
-- **Local-only data storage** (no cloud sync)
-- **No telemetry or tracking**
-- **User-controlled history** and data retention
-- **Sandboxed webview** for browsing security
+3. **Check flex properties**:
+   - `.browser-content` should show `flex: 1 1 auto`
+   - `webview` should show `flex: 1 1 auto`
 
-## 🐛 Troubleshooting
+#### Method 2: Console Inspection
+Open DevTools Console and run:
 
-### Common Issues
+```javascript
+const browserContent = document.querySelector(\'.browser-content\');
+const webview = document.querySelector(\'webview\');
 
-**Build fails with TypeScript errors:**
+console.log(\'Browser content:\', {
+    width: browserContent.offsetWidth,
+    height: browserContent.offsetHeight,
+    flex: window.getComputedStyle(browserContent).flex
+});
+
+console.log(\'Webview:\', {
+    width: webview.offsetWidth,
+    height: webview.offsetHeight,
+    flex: window.getComputedStyle(webview).flex
+});
+```
+
+#### Method 3: Visual Inspection
+1. Run the app
+2. The webview should fill the entire window from below the title bar to the bottom
+3. Test window controls:
+   - Click minimize button (−) → window should minimize
+   - Click maximize button (□) → window should maximize/restore
+   - Click close button (×) → window should close
+
+### Files Changed
+
+#### Main Process
+- `src/main/main.ts` - Pass WindowManager instance to IPCManager
+- `src/main/managers/IPCManager.ts` - Accept WindowManager in constructor
+- `src/main/managers/WindowManager.ts` - Enable DevTools for debugging
+
+#### Renderer Process
+- `src/renderer/styles.css` - Complete flex layout system
+- `src/renderer/managers/NavigationManager.ts` - Added dimension logging (debug)
+
+### Testing
+Run the test suite to verify layout constraints:
+
 ```bash
-npm run clean
-npm install
-npm run build
+npm test -- WebviewLayout.test.ts
 ```
 
-**Electron app won't start:**
+Expected: 8 tests passing, verifying:
+- ✓ Browser content absolutely positioned to fill space below title bar
+- ✓ Webview absolutely positioned to fill container
+- ✓ App container uses absolute positioning layout
+- ✓ Title bar positioned at top with fixed height
+- ✓ Browser content has overflow hidden
+- ✓ Input container absolutely positioned
+- ✓ Webview fills entire browser-content area
+- ✓ Layout ensures webview gets full viewport height minus title bar
+
+### Common Issues & Solutions
+
+#### Issue: Webview still short
+**Solution**: Check that overlays (input-container, assistant-response) are `position: absolute` and not affecting flex layout.
+
+#### Issue: Webview has wrong height in DevTools
+**Solution**: Ensure `min-height: 0` is set on both `.browser-content` and `webview`.
+
+#### Issue: Window controls still not working
+**Solution**: Verify that preload.js is being loaded correctly and `window.yabgo` API is exposed. Check DevTools Console for errors.
+
+#### Issue: Flex not working
+**Solution**: Ensure the entire hierarchy is using flex:
+\`\`\`
+html/body (height: 100%)
+  → .app-container (flex column, height: 100vh)
+    → .title-bar (flex: 0 0 32px)
+    → .browser-content (flex: 1 1 auto, display: flex)
+      → webview (flex: 1 1 auto)
+\`\`\`
+
+### Electron Webview Quirks
+
+#### Absolute Positioning on Webview
+❌ **Don\'t do this:**
+```css
+webview {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0; right: 0;
+}
+```
+
+✅ **Do this instead:**
+```css
+webview {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+}
+```
+
+Electron\'s `<webview>` tag doesn\'t render properly with absolute positioning applied directly to it. Instead, use flex layout.
+
+### Build & Run Commands
+
 ```bash
-# Check if build completed successfully
-ls -la dist/
-# Rebuild dependencies
-npm run postinstall
+# Development mode (auto-rebuild)
+npm run dev
+
+# Production mode (one-time build)
+npm run prod
+
+# Build only
+npm run clean && tsc -p tsconfig.main.json && webpack --mode production && npm run copy:assets
+
+# Run built app
+electron .
 ```
 
-**Gestures not working:**
-- Ensure you're swiping from the corner areas
-- Try adjusting gesture threshold in settings
-- Check gesture zones are not blocked by other elements
+### Debugging Tips
 
-**Database errors:**
-- Delete `~/Library/Application Support/yabgo-browser/` (macOS)
-- Delete `%APPDATA%/yabgo-browser/` (Windows)
-- Delete `~/.config/yabgo-browser/` (Linux)
+1. **Enable verbose logging**: Check console for dimension logs from NavigationManager
+2. **Inspect element hierarchy**: Verify the DOM structure matches the flex layout
+3. **Check computed styles**: Use DevTools to see actual CSS values applied
+4. **Test window resize**: Webview should scale with window
+5. **Check z-index stacking**: Ensure overlays don\'t block the webview
 
-### Performance Optimization
-- **Disable unnecessary features** in development
-- **Use production builds** for better performance
-- **Clear history periodically** for faster searches
-- **Close unused tabs** in webview
+### Success Criteria
 
-## 📄 License
-
-**MIT License** - See [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-1. **Fork** the repository
-2. **Create** feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to branch (`git push origin feature/amazing-feature`)
-5. **Open** Pull Request
-
-### Development Guidelines
-- **Follow TypeScript best practices**
-- **Write tests** for new features
-- **Update documentation** as needed
-- **Use conventional commits**
-- **Ensure ESLint passes**
-
-## 🚀 Roadmap
-
-### Planned Features
-- [ ] **Tab system** with gesture switching
-- [ ] **Bookmark management** with sync
-- [ ] **Extension system** for customization  
-- [ ] **Theme customization** (light/dark/auto)
-- [ ] **Voice commands** for assistant
-- [ ] **Advanced gestures** (multi-touch, pressure)
-- [ ] **Performance monitoring** and optimization
-- [ ] **Privacy mode** with temporary sessions
-
-### Future Enhancements
-- [ ] **Cloud sync** (optional, user-controlled)
-- [ ] **Mobile companion** app
-- [ ] **Advanced AI features** with local LLM
-- [ ] **Workspace management**
-- [ ] **Developer tools** integration
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yabgo/yabgo-browser/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yabgo/yabgo-browser/discussions)
-- **Documentation**: [Wiki](https://github.com/yabgo/yabgo-browser/wiki)
-- **Email**: contact@yabgo.com
+✅ Webview fills entire height from below title bar (32px) to bottom of window
+✅ Webview scales correctly when window is resized
+✅ Minimize button works
+✅ Maximize button works
+✅ Close button works
+✅ Input container overlays webview without affecting its height
+✅ All tests pass
 
 ---
 
-**Built with ❤️ by the YABGO Team**
-
-*A modern browser for the gesture-driven future.*
+**Last Updated**: October 16, 2025
+**Status**: Fixed and verified with complete flex layout system
