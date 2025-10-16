@@ -277,4 +277,25 @@ export class NavigationManager extends EventEmitter {
     public getCurrentURL(): string | null {
         return this.webview?.src || null;
     }
+
+    /**
+     * Cleanup resources and event listeners
+     */
+    public cleanup(): void {
+        if (this.webview) {
+            // Remove all event listeners by cloning the webview element
+            const newWebview = this.webview.cloneNode(true) as Electron.WebviewTag;
+            this.webview.parentNode?.replaceChild(newWebview, this.webview);
+            this.webview = null;
+        }
+
+        // Clear history
+        this.history = [];
+        this.currentIndex = -1;
+
+        // Remove all event listeners from EventEmitter
+        this.removeAllListeners();
+
+        this.logger.info('Navigation manager cleanup completed');
+    }
 }
