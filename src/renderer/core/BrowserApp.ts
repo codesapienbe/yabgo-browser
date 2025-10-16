@@ -6,14 +6,14 @@ import { HistoryManager } from '../managers/HistoryManager';
 import { Logger } from '../../shared/utils/Logger';
 
 /**
- * Main browser application class for renderer process
+ * Main browser application class for a renderer process
  */
 export class BrowserApp {
-    private navigationManager: NavigationManager;
+    private readonly navigationManager: NavigationManager;
     private gestureManager: GestureManager;
-    private uiManager: UIManager;
+    private readonly uiManager: UIManager;
     private assistantManager: AssistantManager;
-    private historyManager: HistoryManager;
+    private readonly historyManager: HistoryManager;
     private logger: Logger;
 
     constructor() {
@@ -42,9 +42,6 @@ export class BrowserApp {
             // Setup inter-manager communication
             this.setupManagerCommunication();
 
-            // Load default page
-            this.navigationManager.loadDefaultPage();
-
             this.logger.info('Browser application initialized successfully');
         } catch (error) {
             this.logger.error('Failed to initialize browser application:', error);
@@ -72,6 +69,10 @@ export class BrowserApp {
         });
 
         // Assistant events
+        this.assistantManager.on('response', (response: any) => {
+            this.uiManager.displayAssistantResponse(response);
+        });
+
         this.assistantManager.on('navigate', (url: string) => {
             this.navigationManager.navigate(url);
             this.uiManager.hideAssistantResponse();

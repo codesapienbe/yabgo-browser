@@ -63,10 +63,7 @@ export class NavigationManager extends EventEmitter {
             }
         });
 
-        // Load default page on initialization
-        setTimeout(() => {
-            this.loadDefaultPage();
-        }, 100);
+        // Do not autoload any default page - keep the webview blank
     }
 
     /**
@@ -160,9 +157,8 @@ export class NavigationManager extends EventEmitter {
      * Load default homepage
      */
     public loadDefaultPage(): void {
-        if (!this.webview) return;
-        this.navigate('https://perplexity.ai');
-        this.logger.info('Default page loaded: perplexity.ai');
+        // Intentionally left empty to keep homepage as about:blank
+        this.logger.info('Default page left empty');
     }
 
     /**
@@ -280,13 +276,5 @@ export class NavigationManager extends EventEmitter {
      */
     public getCurrentURL(): string | null {
         return this.webview?.src || null;
-    }
-
-    /**
-     * Cleanup resources
-     */
-    public cleanup(): void {
-        // Remove event listeners if needed
-        this.logger.info('Navigation manager cleanup completed');
     }
 }

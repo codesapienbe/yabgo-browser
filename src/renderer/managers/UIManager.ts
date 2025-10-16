@@ -27,6 +27,7 @@ export class UIManager extends EventEmitter {
         this.findElements();
         this.setupEventListeners();
         this.setupWindowControls();
+        this.autoFocusSearchField();
 
         this.logger.info('UI manager initialized');
     }
@@ -44,6 +45,19 @@ export class UIManager extends EventEmitter {
         if (!this.unifiedInput || !this.inputBtn || !this.inputContainer || 
             !this.floatingButton || !this.assistantResponse) {
             throw new Error('Required UI elements not found');
+        }
+    }
+
+    /**
+     * Auto-focus the search field on startup
+     */
+    private autoFocusSearchField(): void {
+        if (this.unifiedInput) {
+            // Use a small delay to ensure the DOM is fully ready
+            setTimeout(() => {
+                this.unifiedInput?.focus();
+                this.logger.debug('Search field auto-focused');
+            }, 100);
         }
     }
 
