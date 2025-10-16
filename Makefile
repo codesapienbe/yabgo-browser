@@ -33,3 +33,12 @@ test:
 # Clean build artifacts
 clean:
 	npm run clean
+
+# Create a git tag from VERSION and push it (builds first)
+release:
+	# Build first
+	npm run build
+	# Tag and push using exact contents of VERSION (evaluated at runtime)
+	git tag "$$(cat VERSION)" && git push origin "$$(cat VERSION)"
+
+.PHONY: release

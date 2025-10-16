@@ -148,7 +148,9 @@ export class NavigationManager extends EventEmitter {
      */
     public scrollToTop(): void {
         if (this.webview) {
-            this.webview.executeJavaScript('window.scrollTo(0, 0)');
+            this.webview.executeJavaScript('window.scrollTo(0, 0)').then(() => {
+                this.logger.debug('Scrolled to top');
+            });
             this.logger.debug('Scrolled to top');
         }
     }
@@ -192,7 +194,9 @@ export class NavigationManager extends EventEmitter {
             }
 
             window.addEventListener('scroll', requestScrollUpdate, { passive: true });
-        `);
+        `).then(() => {
+            this.logger.debug('Scroll detection setup completed');
+        });
     }
 
     /**
@@ -279,23 +283,26 @@ export class NavigationManager extends EventEmitter {
     }
 
     /**
-     * Cleanup resources and event listeners
+     * Check if can go back
+     */
+    public canGoBack(): boolean {
+        return this.currentIndex > 0;
+    }
+
+    /**
+     * Check if can go forward
+     */
+    public canGoForward(): boolean {
+        return this.currentIndex < this.history.length - 1;
+    }
+
+    /**
+     * Cleanup navigation manager
      */
     public cleanup(): void {
-        if (this.webview) {
-            // Remove all event listeners by cloning the webview element
-            const newWebview = this.webview.cloneNode(true) as Electron.WebviewTag;
-            this.webview.parentNode?.replaceChild(newWebview, this.webview);
-            this.webview = null;
-        }
-
-        // Clear history
+        this.webview = null;
         this.history = [];
         this.currentIndex = -1;
-
-        // Remove all event listeners from EventEmitter
-        this.removeAllListeners();
-
-        this.logger.info('Navigation manager cleanup completed');
+        this.logger.info('Navigation manager cleaned up');
     }
 }
