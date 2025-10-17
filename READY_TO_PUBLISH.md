@@ -103,10 +103,10 @@ npm run build:store
 **Complexity**: ⭐ Easy
 
 ```bash
-# 1. Generate GPG key (one-time)
+# 1. Use existing GPG key (or generate if you don't have one)
 cd /home/codesapienbe/Projects/yabgo-browser
-gpg --full-generate-key
-# Use: Codesapien Network <yilmaz@codesapien.net>
+# List your keys: gpg --list-secret-keys
+# Already have a key for Java/Git/Email? Perfect! Reuse it!
 
 # 2. Build AppImage
 npm run build

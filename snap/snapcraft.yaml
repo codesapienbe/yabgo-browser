@@ -1,9 +1,9 @@
 name: yabgo-browser
-version: '1.1.1'
+version: "1.1.1"
 summary: Yet Another Browser to Go and Visit
 description: |
   YABGO Browser is a lightning-fast, gesture-driven web browser built for the modern user.
-  
+
   Features:
   * Gesture-powered navigation with intuitive corner swipes
   * AI-powered assistant with MCP (Model Context Protocol) integration
@@ -12,7 +12,7 @@ description: |
   * Lightning-fast performance with native desktop speed
   * Enterprise-grade security with context isolation
   * Cross-platform support (Windows, macOS, Linux)
-  
+
   Built on Electron and Chromium for maximum compatibility and security.
 
 grade: stable
@@ -68,27 +68,25 @@ parts:
       # Install Node.js 20
       wget -qO- https://deb.nodesource.com/setup_20.x | bash -
       apt-get install -y nodejs
-      
+
       # Install dependencies and build
       npm ci --legacy-peer-deps
       npm run build
-      
+
       # Copy built files
       mkdir -p $SNAPCRAFT_PART_INSTALL/opt/yabgo-browser
       cp -r release/linux-unpacked/* $SNAPCRAFT_PART_INSTALL/opt/yabgo-browser/
-      
+
       # Create launcher script
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      cat > $SNAPCRAFT_PART_INSTALL/bin/yabgo-browser << 'EOF'
-#!/bin/bash
-exec "$SNAP/opt/yabgo-browser/yabgo-browser" "$@"
-EOF
+      echo '#!/bin/bash' > $SNAPCRAFT_PART_INSTALL/bin/yabgo-browser
+      echo 'exec "$SNAP/opt/yabgo-browser/yabgo-browser" "$@"' >> $SNAPCRAFT_PART_INSTALL/bin/yabgo-browser
       chmod +x $SNAPCRAFT_PART_INSTALL/bin/yabgo-browser
-      
+
       # Copy icon
       mkdir -p $SNAPCRAFT_PART_INSTALL/meta/gui
       cp assets/icon.png $SNAPCRAFT_PART_INSTALL/meta/gui/icon.png
-      
+
       craftctl default
 
 plugs:
@@ -97,4 +95,3 @@ plugs:
     allow-sandbox: true
   password-manager-service:
     interface: password-manager-service
-

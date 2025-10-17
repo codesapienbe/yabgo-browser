@@ -63,6 +63,12 @@ if ! gpg --list-secret-keys &> /dev/null; then
   else
     exit 1
   fi
+else
+  echo "✅ GPG keys found! You can use any existing key."
+  echo ""
+  echo "💡 Note: If you already have a key (e.g., for Java code signing),"
+  echo "   you can reuse it. GPG keys work for signing any type of file."
+  echo ""
 fi
 
 # List available keys
@@ -85,29 +91,42 @@ echo "Signing AppImage with key: $KEY_EMAIL"
 echo ""
 
 # Sign the AppImage
-gpg --detach-sign --armor "$APPIMAGE_FILE"
-
-SIGNATURE_FILE="${APPIMAGE_FILE}.sig"
-
-if [ -f "$SIGNATURE_FILE" ]; then
+# Using --armor creates a .asc file (ASCII armored signature)
+if gpg --detach-sign --armor --default-key "$KEY_EMAIL" "$APPIMAGE_FILE" 2>&1; then
+  SIGNATURE_FILE="${APPIMAGE_FILE}.asc"
+  
+  echo ""
   echo "✅ Successfully signed!"
   echo ""
-  echo "Signature file: $SIGNATURE_FILE"
+  echo "Files created:"
+  echo "  AppImage:   $APPIMAGE_FILE"
+  echo "  Signature:  $SIGNATURE_FILE"
   echo ""
   echo "Verify signature:"
   echo "  gpg --verify \"$SIGNATURE_FILE\" \"$APPIMAGE_FILE\""
   echo ""
-  echo "Export public key for users:"
+  echo "Export public key for distribution:"
   echo "  gpg --armor --export $KEY_EMAIL > yabgo-browser.gpg"
   echo ""
-  echo "Upload public key to keyserver:"
+  echo "Upload public key to keyserver (optional):"
   echo "  gpg --keyserver keyserver.ubuntu.com --send-keys \$(gpg --list-keys $KEY_EMAIL | grep -oP '(?<=pub   )[A-F0-9]+')"
   echo ""
   echo "Users can verify the AppImage with:"
   echo "  1. Import your public key: gpg --import yabgo-browser.gpg"
   echo "  2. Verify signature: gpg --verify \"$SIGNATURE_FILE\" \"$APPIMAGE_FILE\""
+  echo ""
+  echo "📦 Ready to distribute both files!"
 else
+  echo ""
   echo "❌ Error: Signing failed"
+  echo ""
+  echo "Possible reasons:"
+  echo "  - Wrong passphrase entered"
+  echo "  - GPG agent not running"
+  echo "  - Key doesn't have signing capability"
+  echo ""
+  echo "Try running GPG directly to see the error:"
+  echo "  gpg --detach-sign --armor --default-key $KEY_EMAIL \"$APPIMAGE_FILE\""
   exit 1
 fi
 

@@ -99,8 +99,9 @@ snapcraft upload --release=stable yabgo-browser_1.1.1_amd64.snap
 **Complexity**: ⭐⭐ (Easy)
 
 ```bash
-# 1. Generate GPG key (one-time)
-gpg --full-generate-key
+# 1. Use existing GPG key (or generate if you don't have one)
+# List your keys: gpg --list-secret-keys
+# Already have a key for Java/Git/Email? Perfect! Reuse it!
 
 # 2. Build AppImage
 npm run build

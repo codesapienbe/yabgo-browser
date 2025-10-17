@@ -309,10 +309,19 @@ Flathub also **automatically signs** packages during the build process!
 
 ### AppImage Signing (GPG)
 
-#### Step 1: Generate GPG Key
+#### Step 1: Use or Generate GPG Key
 
+**If you already have a GPG key** (e.g., for Git commits, Java signing, email encryption):
 ```bash
-# Generate GPG key if you don't have one
+# List your existing keys
+gpg --list-secret-keys
+
+# You can reuse any existing key! GPG keys work for all types of signing.
+```
+
+**If you don't have a GPG key**, generate one:
+```bash
+# Generate GPG key
 gpg --full-generate-key
 
 # Choose:
@@ -322,6 +331,8 @@ gpg --full-generate-key
 # - Real name: Codesapien Network
 # - Email: yilmaz@codesapien.net
 ```
+
+**💡 Pro Tip**: GPG keys are universal. If you already use a key for Java JAR signing, Git commit signing, or email encryption, you can use the same key for AppImage signing!
 
 #### Step 2: Export Public Key
 
