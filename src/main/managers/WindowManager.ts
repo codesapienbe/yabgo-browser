@@ -18,6 +18,24 @@ export class WindowManager {
      * Create the main application window
      */
     public createMainWindow(): void {
+        // Choose an appropriate icon for the current platform. When running from
+        // source during development the assets live at the project root `assets/`.
+        // When packaged by electron-builder the `assets` directory is copied into
+        // the app resources; resolve accordingly.
+        const iconPath = (() => {
+            // In packaged apps __dirname will be inside the asar or resources dir.
+            const possiblePackaged = path.join(process.resourcesPath || __dirname, 'assets', process.platform === 'darwin' ? 'app.icns' : 'app.ico');
+            const devPath = path.join(__dirname, '..', '..', 'assets', process.platform === 'darwin' ? 'app.icns' : 'app.ico');
+            try {
+                // Prefer packaged asset when available
+                if (require('fs').existsSync(possiblePackaged)) return possiblePackaged;
+            } catch (e) {
+                // ignore
+            }
+            // Fallback to project assets during development
+            return devPath;
+        })();
+
         const config: WindowConfig = {
             width: 1400,
             height: 900,
@@ -25,6 +43,7 @@ export class WindowManager {
             minHeight: 600,
             titleBarStyle: 'hiddenInset',
             frame: false,
+            icon: iconPath,
             webPreferences: {
                 preload: path.join(__dirname, '../preload.js'),
                 nodeIntegration: false,
