@@ -4,10 +4,21 @@ import { Logger } from '../../shared/utils/Logger';
 import { URLHelper } from '../../shared/utils/URLHelper';
 
 /**
+ * Tab state cache interface for storing tab DOM and state
+ */
+interface TabCache {
+    webviewElement?: Electron.WebviewTag;
+    scrollPosition?: { x: number; y: number };
+    lastLoadedUrl?: string;
+    createdAt?: number;
+}
+
+/**
  * Manages browser tabs and tab-related functionality
  */
 export class TabManager extends EventEmitter {
     private tabs: Map<string, Tab> = new Map();
+    private tabCache: Map<string, TabCache> = new Map();
     private activeTabId: string | null = null;
     private tabContainer: HTMLElement | null = null;
     private webviewContainer: HTMLElement | null = null;
@@ -158,6 +169,13 @@ export class TabManager extends EventEmitter {
         const wasActive = this.tabs.get(tabId)?.isActive;
         this.tabs.delete(tabId);
 
+        // Clear cache for this tab
+        const cachedTab = this.tabCache.get(tabId);
+        if (cachedTab?.webviewElement) {
+            cachedTab.webviewElement.remove();
+        }
+        this.tabCache.delete(tabId);
+
         // If closing active tab, switch to another tab
         if (wasActive && this.tabs.size > 0) {
             const remainingTabs = Array.from(this.tabs.keys());
@@ -266,21 +284,50 @@ export class TabManager extends EventEmitter {
     private renderWebviews(): void {
         if (!this.webviewContainer) return;
 
-        this.webviewContainer.innerHTML = '';
-
         this.tabs.forEach((tab, tabId) => {
-            const webviewElement = document.createElement('webview');
-            webviewElement.className = `tab-webview ${tab.isActive ? 'active' : ''}`;
-            webviewElement.id = `webview-${tabId}`;
-            webviewElement.src = tab.url;
-            webviewElement.allowpopups = true;
-            webviewElement.partition = `persist:yabgo:${tabId}`;
+            // Check if webview is already cached
+            const cached = this.tabCache.get(tabId);
+            let webviewElement = cached?.webviewElement;
 
-            // Setup webview event listeners
-            this.setupWebviewEvents(webviewElement, tabId);
+            // If not cached, create new webview
+            if (!webviewElement) {
+                webviewElement = document.createElement('webview');
+                webviewElement.className = `tab-webview ${tab.isActive ? 'active' : ''}`;
+                webviewElement.id = `webview-${tabId}`;
+                webviewElement.src = tab.url;
+                webviewElement.allowpopups = true;
+                webviewElement.partition = `persist:yabgo:${tabId}`;
 
-            if (this.webviewContainer) {
-                this.webviewContainer.appendChild(webviewElement);
+                // Setup webview event listeners
+                this.setupWebviewEvents(webviewElement, tabId);
+
+                // Cache the webview element
+                if (!this.tabCache.has(tabId)) {
+                    this.tabCache.set(tabId, {});
+                }
+                const tabCacheData = this.tabCache.get(tabId)!;
+                tabCacheData.webviewElement = webviewElement;
+                tabCacheData.lastLoadedUrl = tab.url;
+                tabCacheData.createdAt = Date.now();
+
+                // Append to container
+                if (this.webviewContainer) {
+                    this.webviewContainer.appendChild(webviewElement);
+                }
+
+                this.logger.debug(`Created webview for tab: ${tabId}`);
+            } else {
+                // Webview already exists, just update active state
+                webviewElement.className = `tab-webview ${tab.isActive ? 'active' : ''}`;
+
+                // Ensure it's in the DOM
+                if (!webviewElement.parentElement) {
+                    if (this.webviewContainer) {
+                        this.webviewContainer.appendChild(webviewElement);
+                    }
+                }
+
+                this.logger.debug(`Reusing cached webview for tab: ${tabId}`);
             }
         });
     }
@@ -476,10 +523,31 @@ export class TabManager extends EventEmitter {
      * Cleanup resources
      */
     public cleanup(): void {
+        // Clear all cached webviews
+        this.tabCache.forEach((cache) => {
+            if (cache.webviewElement) {
+                cache.webviewElement.remove();
+            }
+        });
+        this.tabCache.clear();
+
         this.tabs.clear();
         this.activeTabId = null;
         this.tabContainer = null;
         this.webviewContainer = null;
         this.logger.info('Tab manager cleanup completed');
+    }
+
+    /**
+     * Get cache statistics for debugging
+     */
+    public getCacheStats(): { tabCount: number; cachedCount: number; cacheSize: number } {
+        return {
+            tabCount: this.tabs.size,
+            cachedCount: this.tabCache.size,
+            cacheSize: Array.from(this.tabCache.values()).reduce((size, cache) => {
+                return size + (cache.webviewElement ? 1 : 0);
+            }, 0)
+        };
     }
 }
