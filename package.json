@@ -5,6 +5,9 @@
   "main": "dist/main/main.js",
   "scripts": {
     "build": "bash scripts/build-all.sh",
+    "build:store": "bash scripts/build-store.sh",
+    "build:snap": "snapcraft",
+    "build:sign": "bash scripts/sign-appimage.sh",
     "dev": "concurrently \"tsc -p tsconfig.main.json --watch\" \"webpack --watch\" \"wait-on dist/main/main.js dist/renderer.bundle.js && electron --no-sandbox .\"",
     "prod": "npm run clean && tsc -p tsconfig.main.json && webpack --mode production && npm run copy:assets && electron --no-sandbox .",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
@@ -103,7 +106,12 @@
             "ia32"
           ]
         }
-      ]
+      ],
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "signDlls": true,
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com"
     },
     "linux": {
       "target": [
@@ -113,11 +121,44 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "category": "Network",
+      "maintainer": "Codesapien Network <yilmaz@codesapien.net>",
+      "vendor": "Codesapien Network",
+      "synopsis": "Modern gesture-driven web browser",
+      "description": "Yet Another Browser to Go and Visit - A lightning-fast, gesture-driven web browser with AI assistant and MCP integration",
+      "desktop": {
+        "Name": "YABGO Browser",
+        "Comment": "Yet Another Browser to Go and Visit",
+        "Categories": "Network;WebBrowser;",
+        "MimeType": "text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;"
+      }
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "YABGO Browser"
+    },
+    "appx": {
+      "applicationId": "YABGOBrowser",
+      "displayName": "YABGO Browser",
+      "publisherDisplayName": "Codesapien Network",
+      "identityName": "CodesapienNetwork.YABGOBrowser",
+      "languages": [
+        "en-US"
+      ],
+      "backgroundColor": "#1a1a1a",
+      "showNameOnTiles": true,
+      "addAutoLaunchExtension": false
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     }
   }
 }

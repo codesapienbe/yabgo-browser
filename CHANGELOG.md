@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.1] - 2025-10-17
+## [1.1.1] - 2025-10-18
 
 ### Added
 - 🎁 **Default MCP Servers**: 5 pre-configured MCP servers automatically added on first run
@@ -24,12 +24,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reader view now displays formatted content with headers, lists, links, and images
   - Improved readability with proper HTML rendering
 
+### Added - Code Signing & Distribution
+- 🔐 **Complete Code Signing Setup**: Ready for all major app stores
+  - Microsoft Store (APPX) configuration
+  - Snap Store manifest with automatic signing
+  - Flathub manifest for Linux distribution
+  - AppImage GPG signing script
+  - macOS code signing entitlements
+- 📦 **New Build Scripts**:
+  - `npm run build:store` - Build for Microsoft Store
+  - `npm run build:snap` - Build Snap package
+  - `npm run build:sign` - Sign AppImage with GPG
+- 📚 **Distribution Documentation**:
+  - Complete code signing guide (`docs/CODE_SIGNING_GUIDE.md`)
+  - Quick start guide (`SIGNING_QUICKSTART.md`)
+  - Setup summary (`CODE_SIGNING_SETUP_SUMMARY.md`)
+  - Publishing guide (`READY_TO_PUBLISH.md`)
+
 ### Technical
 - Added `marked` npm package for markdown parsing
 - Added `@types/marked` for TypeScript support
 - Updated `UIManager.showReader()` to async for markdown parsing
 - New `DefaultMCPServers.ts` utility for server initialization
 - Enhanced `main.ts` with `initializeDefaultMCPServers()` method
+- Extended `package.json` build configuration for all platforms
+- Created Snap, Flatpak, and desktop integration files
 
 ## [1.1.0] - 2025-10-17
 

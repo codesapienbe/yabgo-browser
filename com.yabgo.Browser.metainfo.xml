@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.yabgo.Browser</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>YABGO Browser</name>
+  <summary>Yet Another Browser to Go and Visit</summary>
+  
+  <description>
+    <p>
+      YABGO Browser is a lightning-fast, gesture-driven web browser built for the modern user.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Gesture-powered navigation with intuitive corner swipes</li>
+      <li>AI-powered assistant with MCP (Model Context Protocol) integration</li>
+      <li>5 pre-configured MCP servers (Filesystem, Memory, Brave Search, Git, Time)</li>
+      <li>Distraction-free dark theme interface</li>
+      <li>Lightning-fast performance</li>
+      <li>Enterprise-grade security</li>
+      <li>Cross-platform support</li>
+    </ul>
+  </description>
+  
+  <launchable type="desktop-id">com.yabgo.Browser.desktop</launchable>
+  
+  <screenshots>
+    <screenshot type="default">
+      <caption>YABGO Browser main interface</caption>
+      <image>https://raw.githubusercontent.com/codesapienbe/yabgo-browser/master/assets/screenshot.png</image>
+    </screenshot>
+  </screenshots>
+  
+  <url type="homepage">https://github.com/codesapienbe/yabgo-browser</url>
+  <url type="bugtracker">https://github.com/codesapienbe/yabgo-browser/issues</url>
+  <url type="help">https://github.com/codesapienbe/yabgo-browser/blob/master/README.md</url>
+  
+  <developer_name>Codesapien Network</developer_name>
+  
+  <provides>
+    <binary>yabgo-browser</binary>
+  </provides>
+  
+  <releases>
+    <release version="1.1.1" date="2025-10-17">
+      <description>
+        <p>New features and bug fixes:</p>
+        <ul>
+          <li>Added 5 default MCP servers for enhanced functionality</li>
+          <li>Fixed markdown reader view rendering</li>
+          <li>Improved user experience with zero-configuration servers</li>
+        </ul>
+      </description>
+    </release>
+    <release version="1.1.0" date="2025-10-17">
+      <description>
+        <p>Major update with MCP integration:</p>
+        <ul>
+          <li>Full MCP (Model Context Protocol) integration</li>
+          <li>AI-powered browsing assistant</li>
+          <li>Gesture-driven navigation system</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-info">moderate</content_attribute>
+  </content_rating>
+</component>
+
