@@ -52,9 +52,6 @@ else
   else
     echo "No sudo available; will skip automatic wine installation."
   fi
-  else
-    echo "No sudo available; will skip automatic wine installation."
-  fi
 fi
 
 # Final check: if wine is available proceed with Windows build, otherwise skip it gracefully
