@@ -17,6 +17,7 @@
                 <div class="version">v1.0.0</div>
             </div>
             <div class="title-bar-right">
+                <button class="window-btn settings-btn" id="mcpSettingsBtn" title="MCP Settings">⚙</button>
                 <button class="window-btn reader-btn" id="readerToggle" title="Reader">R</button>
                 <button class="window-btn minimize-btn" id="minimizeBtn" title="Minimize">−</button>
                 <button class="window-btn maximize-btn" id="maximizeBtn" title="Maximize">□</button>
@@ -63,6 +64,72 @@
         </div>
         <!-- Reader overlay -->
         <div id="readerOverlay" class="reader-overlay"></div>
+
+        <!-- MCP Settings Modal -->
+        <div id="mcpSettingsModal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>MCP Servers</h2>
+                    <button class="modal-close" id="mcpModalClose">×</button>
+                </div>
+
+                <div class="mcp-server-list" id="mcpServerList">
+                    <!-- Server items will be added dynamically -->
+                </div>
+
+                <button class="btn-primary" id="addMCPServerBtn">
+                    + Add MCP Server
+                </button>
+            </div>
+        </div>
+
+        <!-- Add Server Modal -->
+        <div id="mcpServerFormModal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add MCP Server</h2>
+                    <button class="modal-close" id="mcpFormModalClose">×</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Server Name</label>
+                    <input type="text" id="mcpServerName" placeholder="My MCP Server">
+                </div>
+
+                <div class="form-group">
+                    <label>Command</label>
+                    <input type="text" id="mcpServerCommand" placeholder="node">
+                </div>
+
+                <div class="form-group">
+                    <label>Arguments (comma-separated)</label>
+                    <input type="text" id="mcpServerArgs" placeholder="path/to/server.js">
+                </div>
+
+                <div class="permissions-section">
+                    <h3>Permissions</h3>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="permShareHistory">
+                        <span>Share browsing history</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="permShareContent">
+                        <span>Share page content</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="permShareSelection">
+                        <span>Share text selections</span>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-primary" id="mcpSaveBtn">Save & Connect</button>
+                    <button class="btn-secondary" id="mcpCancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="renderer.bundle.js"></script>

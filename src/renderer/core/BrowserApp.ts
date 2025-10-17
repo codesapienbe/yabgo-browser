@@ -4,6 +4,7 @@ import { UIManager } from '../managers/UIManager';
 import { AssistantManager } from '../managers/AssistantManager';
 import { HistoryManager } from '../managers/HistoryManager';
 import { TabManager } from '../managers/TabManager';
+import { MCPSettingsManager } from '../managers/MCPSettingsManager';
 import { Logger } from '../../shared/utils/Logger';
 
 /**
@@ -16,6 +17,7 @@ export class BrowserApp {
     private assistantManager: AssistantManager;
     private readonly historyManager: HistoryManager;
     private readonly tabManager: TabManager;
+    private readonly mcpSettingsManager: MCPSettingsManager;
     private logger: Logger;
 
     constructor() {
@@ -28,6 +30,7 @@ export class BrowserApp {
         this.historyManager = new HistoryManager();
         this.tabManager = new TabManager();
         this.assistantManager = new AssistantManager(this.historyManager);
+        this.mcpSettingsManager = new MCPSettingsManager();
     }
 
     /**
@@ -42,6 +45,7 @@ export class BrowserApp {
             await this.uiManager.initialize();
             await this.assistantManager.initialize();
             await this.historyManager.initialize();
+            await this.mcpSettingsManager.initialize();
 
             // Setup inter-manager communication
             this.setupManagerCommunication();

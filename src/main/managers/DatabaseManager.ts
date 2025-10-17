@@ -203,6 +203,40 @@ export class DatabaseManager {
 
         this.db.exec(createTableSQL);
         this.logger.info('Database tables created successfully');
+        // Initialize MCP tables for Phase 1
+        this.initializeMCPTables();
+    }
+
+    private initializeMCPTables(): void {
+        if (!this.db) throw new Error('Database not initialized');
+
+        const mcpSQL = `
+            CREATE TABLE IF NOT EXISTS mcp_servers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                config TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                last_used INTEGER
+            );
+
+            CREATE TABLE IF NOT EXISTS mcp_tool_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                server_id TEXT NOT NULL,
+                tool_name TEXT NOT NULL,
+                params TEXT,
+                result TEXT,
+                timestamp INTEGER NOT NULL,
+                FOREIGN KEY(server_id) REFERENCES mcp_servers(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_tool_history_server 
+              ON mcp_tool_history(server_id);
+            CREATE INDEX IF NOT EXISTS idx_tool_history_timestamp 
+              ON mcp_tool_history(timestamp);
+        `;
+
+        this.db.exec(mcpSQL);
+        this.logger.info('MCP tables created successfully');
     }
 
     /**
@@ -307,6 +341,66 @@ export class DatabaseManager {
         const result = stmt.run();
 
         this.logger.info(`Cleared ${result.changes} history entries`);
+    }
+
+    // MCP-related DB methods (Phase 1)
+    public saveMCPServer(config: any): void {
+        if (!this.db) throw new Error('Database not initialized');
+
+        const stmt = this.db.prepare(`
+            INSERT OR REPLACE INTO mcp_servers (id, name, config, created_at, last_used)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            config.id,
+            config.name,
+            JSON.stringify(config),
+            config.createdAt,
+            config.lastUsed || null
+        );
+    }
+
+    public getMCPServers(): any[] {
+        if (!this.db) throw new Error('Database not initialized');
+
+        const rows = this.db.prepare('SELECT config FROM mcp_servers WHERE 1=1').all();
+        return rows.map((row: any) => JSON.parse(row.config));
+    }
+
+    public deleteMCPServer(serverId: string): void {
+        if (!this.db) throw new Error('Database not initialized');
+
+        this.db.prepare('DELETE FROM mcp_servers WHERE id = ?').run(serverId);
+        this.db.prepare('DELETE FROM mcp_tool_history WHERE server_id = ?').run(serverId);
+    }
+
+    public saveMCPToolCall(serverId: string, toolCall: any, result: any): void {
+        if (!this.db) throw new Error('Database not initialized');
+
+        const stmt = this.db.prepare(`
+            INSERT INTO mcp_tool_history (server_id, tool_name, params, result, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            serverId,
+            toolCall.toolName,
+            JSON.stringify(toolCall.params || {}),
+            JSON.stringify(result || {}),
+            toolCall.timestamp || Date.now()
+        );
+    }
+
+    public getMCPToolHistory(serverId: string, limit: number = 50): any[] {
+        if (!this.db) throw new Error('Database not initialized');
+
+        return this.db.prepare(`
+            SELECT * FROM mcp_tool_history 
+            WHERE server_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        `).all(serverId, limit);
     }
 
     /**

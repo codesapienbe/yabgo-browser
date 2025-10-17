@@ -1,8 +1,10 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import { WindowManager } from './WindowManager';
 import { DatabaseManager } from './DatabaseManager';
+import { MCPClientManager } from './MCPClientManager';
 import { AssistantService } from '../services/AssistantService';
 import { PageMetadata, AssistantResponse } from '../../shared/types/DataTypes';
+import { MCPServerConfig, MCPToolCall } from '../../types/mcp.types';
 import { Logger } from '../../shared/utils/Logger';
 
 /**
@@ -12,13 +14,15 @@ export class IPCManager {
     private databaseManager: DatabaseManager;
     private assistantService: AssistantService;
     private windowManager: WindowManager;
+    private mcpClientManager: MCPClientManager;
     private logger: Logger;
 
-    constructor(databaseManager: DatabaseManager, windowManager: WindowManager) {
+    constructor(databaseManager: DatabaseManager, windowManager: WindowManager, mcpClientManager: MCPClientManager) {
         this.databaseManager = databaseManager;
         this.assistantService = new AssistantService(databaseManager);
         // Use the WindowManager instance provided by the app instead of creating a new one
         this.windowManager = windowManager;
+        this.mcpClientManager = mcpClientManager;
         this.logger = new Logger('IPCManager');
     }
 
@@ -39,6 +43,9 @@ export class IPCManager {
         ipcMain.handle('window:maximize', this.handleMaximizeWindow.bind(this));
         ipcMain.handle('window:close', this.handleCloseWindow.bind(this));
 
+        // MCP operations
+        this.setupMCPHandlers();
+
         this.logger.info('IPC handlers setup completed');
     }
 
@@ -54,9 +61,9 @@ export class IPCManager {
             return { success: true };
         } catch (error) {
             this.logger.error('Error saving metadata:', error);
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Unknown error' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error'
             };
         }
     }
@@ -125,5 +132,109 @@ export class IPCManager {
      */
     private async handleCloseWindow(_event: IpcMainInvokeEvent): Promise<void> {
         this.windowManager.closeWindow();
+    }
+
+    /**
+     * Setup MCP-specific IPC handlers
+     */
+    private setupMCPHandlers(): void {
+        // Connect to MCP server
+        ipcMain.handle('mcp:connect-server', async (_event, config: MCPServerConfig) => {
+            try {
+                const success = await this.mcpClientManager.connectToServer(config);
+                if (success) {
+                    this.databaseManager.saveMCPServer(config);
+                }
+                return { success, serverId: config.id };
+            } catch (error) {
+                this.logger.error('[IPC] MCP connect error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Disconnect from MCP server
+        ipcMain.handle('mcp:disconnect-server', async (_event, serverId: string) => {
+            try {
+                await this.mcpClientManager.disconnectServer(serverId);
+                return { success: true };
+            } catch (error) {
+                this.logger.error('[IPC] MCP disconnect error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Discover tools
+        ipcMain.handle('mcp:discover-tools', async (_event, serverId: string) => {
+            try {
+                const tools = await this.mcpClientManager.discoverTools(serverId);
+                return { success: true, tools };
+            } catch (error) {
+                this.logger.error('[IPC] MCP discover tools error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Call tool
+        ipcMain.handle('mcp:call-tool', async (_event, toolCall: MCPToolCall) => {
+            try {
+                const result = await this.mcpClientManager.callTool(toolCall);
+                this.databaseManager.saveMCPToolCall(toolCall.serverId, toolCall, result);
+                return result;
+            } catch (error) {
+                this.logger.error('[IPC] MCP call tool error:', error);
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                    timestamp: Date.now()
+                };
+            }
+        });
+
+        // Get saved servers
+        ipcMain.handle('mcp:get-servers', async () => {
+            try {
+                const servers = this.databaseManager.getMCPServers();
+                return { success: true, servers };
+            } catch (error) {
+                this.logger.error('[IPC] MCP get servers error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Delete server
+        ipcMain.handle('mcp:delete-server', async (_event, serverId: string) => {
+            try {
+                await this.mcpClientManager.disconnectServer(serverId);
+                this.databaseManager.deleteMCPServer(serverId);
+                return { success: true };
+            } catch (error) {
+                this.logger.error('[IPC] MCP delete server error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Forward MCP events to renderer
+        this.mcpClientManager.on('server-connected', (serverId) => {
+            const mainWindow = this.windowManager.getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('mcp:server-connected', serverId);
+            }
+        });
+
+        this.mcpClientManager.on('tools-discovered', (data) => {
+            const mainWindow = this.windowManager.getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('mcp:tools-discovered', data);
+            }
+        });
+
+        this.mcpClientManager.on('error', (data) => {
+            const mainWindow = this.windowManager.getMainWindow();
+            if (mainWindow) {
+                mainWindow.webContents.send('mcp:error', data);
+            }
+        });
+
+        this.logger.info('MCP IPC handlers setup completed');
     }
 }

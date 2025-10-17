@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import { WindowManager } from './managers/WindowManager';
 import { DatabaseManager } from './managers/DatabaseManager';
+import { MCPClientManager } from './managers/MCPClientManager';
 import { IPCManager } from './managers/IPCManager';
 import { Logger } from '../shared/utils/Logger';
 
@@ -10,6 +11,7 @@ import { Logger } from '../shared/utils/Logger';
 class YabgoApp {
     private windowManager: WindowManager;
     private readonly databaseManager: DatabaseManager;
+    private readonly mcpClientManager: MCPClientManager;
     private ipcManager: IPCManager;
     private logger: Logger;
 
@@ -18,9 +20,10 @@ class YabgoApp {
         this.logger.info('Initializing YABGO Browser...');
 
         this.databaseManager = new DatabaseManager();
+        this.mcpClientManager = new MCPClientManager();
         this.windowManager = new WindowManager();
-        // Pass the existing WindowManager instance into IPCManager
-        this.ipcManager = new IPCManager(this.databaseManager, this.windowManager);
+        // Pass managers into IPCManager
+        this.ipcManager = new IPCManager(this.databaseManager, this.windowManager, this.mcpClientManager);
     }
 
     /**
@@ -69,6 +72,9 @@ class YabgoApp {
      */
     private cleanup(): void {
         this.logger.info('Cleaning up resources...');
+        this.mcpClientManager.cleanup().catch(err => {
+            this.logger.error('Error during MCP cleanup:', err);
+        });
         this.databaseManager.close();
     }
 }
