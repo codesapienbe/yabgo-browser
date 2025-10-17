@@ -570,7 +570,7 @@ export class TabManager extends EventEmitter {
     private removePerplexitySignInPrompt(webview: Electron.WebviewTag): void {
         webview.executeJavaScript(`
             (function removeSignInPrompt() {
-                const targetKeywords = ['sign in', 'create an account', 'sign up', 'create account', 'log in'];
+                const targetKeywords = ['sign in', 'create an account', 'sign up', 'create account', 'log in', 'Sign in or create an account', 'Single sign-on (SSO)'];
                 let monitoringActive = false;
 
                 const removeSignInElements = () => {
