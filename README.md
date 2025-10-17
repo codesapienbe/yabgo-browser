@@ -16,13 +16,15 @@ Navigate with **intuitive corner swipes** instead of clicking buttons:
 
 No more reaching for the back button. Just swipe, and keep browsing.
 
-### 🤖 AI-Powered Assistant
-Have a conversation with your browser:
+### 🤖 AI-Powered Assistant with MCP Integration
+Have a conversation with your browser and execute AI tools:
 - Ask questions naturally (e.g., "What's the weather?", "Show me news")
+- **Execute MCP tools** with simple commands (e.g., `@github search-repos query=typescript`)
 - Get instant results without leaving the page
 - Smart context awareness for better responses
+- Connect to external AI services via Model Context Protocol
 
-Simply type your question and let the AI handle the rest.
+Simply type your question or `@servername toolname` to invoke tools.
 
 ### 🌙 Distraction-Free Interface
 - **Dark theme** optimized for comfortable extended browsing
@@ -211,6 +213,12 @@ A: Absolutely! YABGO is open-source. See the [Development Guide](#-development-g
 - Try rephrasing your question more simply
 - Refresh the page
 
+### MCP tools not working
+- Verify server is configured correctly (Settings → MCP Servers)
+- Check command path is absolute
+- Try "Discover Tools" button to refresh
+- See [MCP Integration Guide](docs/MCP_INTEGRATION.md)
+
 ### Blank screen/crashes
 - Update to the latest version
 - Reinstall the application
@@ -229,15 +237,20 @@ A: Absolutely! YABGO is open-source. See the [Development Guide](#-development-g
 
 ## 📝 What's New
 
-### Version 1.0.0 (Latest)
+### Version 1.0.9 (Latest)
 - ✨ Gesture-driven navigation system
 - 🤖 AI-powered browsing assistant
+- 🔧 **MCP (Model Context Protocol) Integration**
+  - Connect to AI tools and services
+  - Execute tools with `@servername toolname` syntax
+  - Privacy-aware context sharing
+  - Visual status indicator
 - 🌙 Beautiful dark theme
 - ⚡ Lightning-fast performance
 - 🔒 Enterprise-grade security
 - 🖥️ Cross-platform support
 
-[See Full Changelog](CHANGELOG.md)
+[See Full Changelog](CHANGELOG.md) | [MCP Integration Guide](docs/MCP_INTEGRATION.md)
 
 ---
 
