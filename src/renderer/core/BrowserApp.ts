@@ -38,16 +38,32 @@ export class BrowserApp {
      */
     public async initialize(): Promise<void> {
         try {
+            this.logger.debug('Starting browser application initialization...');
+
             // Initialize all managers
+            this.logger.debug('Initializing TabManager...');
             await this.tabManager.initialize();
+
+            this.logger.debug('Initializing NavigationManager...');
             await this.navigationManager.initialize();
+
+            this.logger.debug('Initializing GestureManager...');
             await this.gestureManager.initialize();
+
+            this.logger.debug('Initializing UIManager...');
             await this.uiManager.initialize();
+
+            this.logger.debug('Initializing AssistantManager...');
             await this.assistantManager.initialize();
+
+            this.logger.debug('Initializing HistoryManager...');
             await this.historyManager.initialize();
+
+            this.logger.debug('Initializing MCPSettingsManager...');
             await this.mcpSettingsManager.initialize();
 
             // Setup inter-manager communication
+            this.logger.debug('Setting up manager communication...');
             this.setupManagerCommunication();
 
             this.logger.info('Browser application initialized successfully');

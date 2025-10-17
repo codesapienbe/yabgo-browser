@@ -13,7 +13,7 @@ export class Logger {
     private context: string;
     private level: LogLevel;
 
-    constructor(context: string, level: LogLevel = LogLevel.INFO) {
+    constructor(context: string, level: LogLevel = LogLevel.DEBUG) {
         this.context = context;
         this.level = level;
     }
