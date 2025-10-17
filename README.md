@@ -52,6 +52,41 @@ Same beautiful experience everywhere.
 
 ---
 
+## 🛡️ Privacy & Ad-Free Guarantee
+
+We believe in **radical privacy**. YABGO is engineered from the ground up to be completely ad-free and privacy-respecting.
+
+### ✅ What We Don't Do
+- ❌ **No Ads** — Zero advertising networks, no Google Ads, no sponsored content
+- ❌ **No Tracking** — No Google Analytics, no Facebook Pixel, no telemetry
+- ❌ **No Data Collection** — We don't collect, sell, or share your browsing data
+- ❌ **No Third-Party Scripts** — No external services monitoring your activity
+- ❌ **No Profiling** — Your interests and behaviors are not analyzed or sold
+
+### ✅ What We Do Instead
+- ✅ **Local-First Architecture** — All browsing history stored locally on your device
+- ✅ **Encrypted Partitions** — Each tab runs in an isolated, sandboxed environment
+- ✅ **Enterprise Security** — Context isolation, strict content security policies
+- ✅ **Open Source** — Audit the code yourself, no hidden surprises
+- ✅ **Transparent** — MIT Licensed, community-driven development
+
+### 🔐 Technical Security Details
+- **Chromium Security** — Built on Chromium, inheriting 10+ years of security hardening
+- **Electron Best Practices** — Context isolation prevents code injection
+- **Node Integration Disabled** — Renderer process cannot access system resources
+- **Sandbox Mode Active** — WebViews run in restricted environments
+- **Secure Web Preferences** — HTTPS enforced, insecure content blocked
+- **Isolated Tab Partitions** — Each tab has separate storage (`persist:yabgo:tabid`)
+
+### 💡 Why Privacy Matters
+In 2025, your data is often worth more than the software itself. We've chosen a different path: sustainable, open-source development without exploiting your privacy. Browse with complete peace of mind knowing:
+- Your searches stay on your computer
+- Your history is yours alone
+- Your choices aren't being tracked or monetized
+- Your digital life remains private
+
+---
+
 ## 🚀 Getting Started
 
 ### Installation
