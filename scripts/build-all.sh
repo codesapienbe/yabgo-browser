@@ -32,24 +32,26 @@ echo "Copying assets..."
 npm run copy:assets
 
 echo "Building Linux artifacts (AppImage)..."
-electron-builder --linux --publish never --config.extraMetadata.version="v${VERSION_STR}"
+# Use the numeric version (no leading 'v') when passing to electron-builder
+electron-builder --linux --publish never --config.extraMetadata.version="${VERSION_NUM}"
 
 echo "Preparing Windows build..."
 # Re-check wine presence; attempt install if sudo is available
 if command -v wine >/dev/null 2>&1; then
   echo "wine detected"
 else
-  echo "wine not found. Attempting to install libwine or wine32 (requires sudo)."
+  echo "wine not found. Attempting to install libwine or wine64 (requires sudo)."
   if sudo -n true 2>/dev/null; then
-    sudo apt-get update || true
-    # Try to install libwine (replacement on newer Ubuntu)
-    sudo apt-get install -y --no-install-recommends libwine || true
-    # Ensure i386 architecture for wine32 if needed
-    if ! dpkg --print-foreign-architectures | grep -q i386; then
-      sudo dpkg --add-architecture i386 || true
-      sudo apt-get update || true
-      sudo apt-get install -y wine32:i386 || true
-    fi
+    # Install Wine from WineHQ (recommended) with i386 multiarch enabled
+    sudo dpkg --add-architecture i386 || true
+    sudo mkdir -pm755 /etc/apt/keyrings || true
+    sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key || true
+    sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$(lsb_release -cs)/winehq-$(lsb_release -cs).sources || true
+    sudo apt update || true
+    sudo apt install --install-recommends -y winehq-stable || true
+  else
+    echo "No sudo available; will skip automatic wine installation."
+  fi
   else
     echo "No sudo available; will skip automatic wine installation."
   fi
@@ -58,12 +60,13 @@ fi
 # Final check: if wine is available proceed with Windows build, otherwise skip it gracefully
 if command -v wine >/dev/null 2>&1; then
   echo "Building Windows artifacts (nsis)..."
-  electron-builder --win --publish never --config.extraMetadata.version="v${VERSION_STR}" || {
-    echo "Windows build failed. If the error mentions wine32, install libwine or enable i386 and install wine32:i386."
+  # Use the numeric version (no leading 'v') when passing to electron-builder
+  electron-builder --win --publish never --config.extraMetadata.version="${VERSION_NUM}" || {
+    echo "Windows build failed. If the error mentions wine64, install libwine or install wine64."
     exit 1
   }
 else
-  echo "Skipping Windows build: wine not available. To enable Windows builds locally install libwine or enable i386 and install wine32:i386."
+  echo "Skipping Windows build: wine not available. To enable Windows builds locally install libwine or install wine64."
 fi
 
 echo "Build complete. Artifacts are in the release/ directory."
