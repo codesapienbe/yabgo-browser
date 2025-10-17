@@ -44,9 +44,6 @@ export class WindowManager {
         this.mainWindow.loadFile(htmlPath);
         this.mainWindow.setMenuBarVisibility(false);
 
-        // Always open DevTools to debug layout issues
-        this.mainWindow.webContents.openDevTools();
-
         this.setupWindowEvents();
 
         this.logger.info('Main window created successfully');
@@ -65,6 +62,7 @@ export class WindowManager {
 
         this.mainWindow.on('ready-to-show', () => {
             this.mainWindow?.show();
+            this.mainWindow?.focus();
             this.logger.info('Main window ready to show');
         });
 

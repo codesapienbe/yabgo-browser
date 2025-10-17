@@ -65,6 +65,17 @@ export class UIManager extends EventEmitter {
     }
 
     /**
+     * Focus the input field (public method for external use)
+     */
+    public focusInput(): void {
+        if (this.unifiedInput) {
+            this.unifiedInput.focus();
+            this.centerInput();
+            this.logger.debug('Input field focused');
+        }
+    }
+
+    /**
      * Setup event listeners
      */
     private setupEventListeners(): void {

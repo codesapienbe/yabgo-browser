@@ -60,6 +60,8 @@ export class BrowserApp {
         // Tab events
         this.tabManager.on('tab-created', (tab: any) => {
             this.logger.debug(`Tab created: ${tab.id}`);
+            // Auto-focus input when new tab is created
+            this.uiManager.focusInput();
         });
 
         this.tabManager.on('tab-switched', (tab: any) => {

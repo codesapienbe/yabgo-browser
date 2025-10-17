@@ -86,21 +86,29 @@ export class TabManager extends EventEmitter {
 
                 // Handle tab close button
                 if (target.classList.contains('tab-close')) {
+                    event.stopPropagation();
                     const tabId = target.getAttribute('data-tab-id');
                     if (tabId) {
                         this.closeTab(tabId);
                     }
+                    return;
                 }
-                // Handle tab switching
-                else if (target.classList.contains('tab-item')) {
-                    const tabId = target.getAttribute('data-tab-id');
+
+                // Handle new tab button
+                if (target.classList.contains('new-tab-btn') || target.closest('.new-tab-btn')) {
+                    event.stopPropagation();
+                    this.createNewTab();
+                    return;
+                }
+
+                // Handle tab switching - find closest tab-item parent
+                const tabItem = target.closest('.tab-item');
+                if (tabItem) {
+                    event.stopPropagation();
+                    const tabId = tabItem.getAttribute('data-tab-id');
                     if (tabId && tabId !== this.activeTabId) {
                         this.switchToTab(tabId);
                     }
-                }
-                // Handle new tab button
-                else if (target.classList.contains('new-tab-btn') || target.closest('.new-tab-btn')) {
-                    this.createNewTab();
                 }
             });
         }
