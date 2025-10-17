@@ -1,4 +1,4 @@
-.PHONY: run build dev test clean install release prod help
+.PHONY: run build test clean install release help
 
 help:
 	@echo "YABGO Browser - Available Make Targets"
