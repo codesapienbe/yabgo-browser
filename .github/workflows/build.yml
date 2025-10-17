@@ -39,10 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Prepare system for Windows builds (wine, nsis, tools)
+      - name: Prepare system for Windows builds (WineHQ, nsis, tools)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends wine64 libwine cabextract icoutils p7zip-full nsis
+          set -euo pipefail
+          sudo dpkg --add-architecture i386 || true
+          sudo mkdir -pm755 /etc/apt/keyrings || true
+          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key || true
+          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/$(lsb_release -cs)/winehq-$(lsb_release -cs).sources || true
+          sudo apt update
+          sudo apt install --install-recommends -y winehq-stable cabextract icoutils p7zip-full nsis || true
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
