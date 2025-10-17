@@ -92,18 +92,18 @@ In 2025, your data is often worth more than the software itself. We've chosen a 
 ### Installation
 
 #### **Windows**
-1. Download `YABGO-Browser-Setup.exe` from [Releases](https://github.com/yabgo/yabgo-browser/releases)
+1. Download `YABGO-Browser-Setup.exe` from [Releases](https://github.com/codesapienbe/yabgo-browser/releases)
 2. Run the installer
 3. Launch YABGO Browser from your Start Menu
 
 #### **macOS**
-1. Download `YABGO-Browser.dmg` from [Releases](https://github.com/yabgo/yabgo-browser/releases)
+1. Download `YABGO-Browser.dmg` from [Releases](https://github.com/codesapienbe/yabgo-browser/releases)
 2. Open the DMG file
 3. Drag YABGO to Applications
 4. Launch from Applications folder
 
 #### **Linux**
-1. Download `YABGO-Browser.AppImage` from [Releases](https://github.com/yabgo/yabgo-browser/releases)
+1. Download `YABGO-Browser.AppImage` from [Releases](https://github.com/codesapienbe/yabgo-browser/releases)
 2. Make it executable: `chmod +x YABGO-Browser.AppImage`
 3. Run: `./YABGO-Browser.AppImage`
 

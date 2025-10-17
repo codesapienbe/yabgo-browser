@@ -4,7 +4,7 @@
   "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant",
   "main": "dist/main/main.js",
   "scripts": {
-    "build": "npm run clean && tsc -p tsconfig.main.json && webpack --mode production && npm run copy:assets && electron-builder --linux --publish never",
+    "build": "npm run build:all",
     "build:win": "npm run clean && tsc -p tsconfig.main.json && webpack --mode production && npm run copy:assets && electron-builder --win --publish never",
     "build:all": "npm run clean && tsc -p tsconfig.main.json && webpack --mode production && npm run copy:assets && electron-builder --linux --publish never && electron-builder --win --publish never",
     "dev": "concurrently \"tsc -p tsconfig.main.json --watch\" \"webpack --watch\" \"wait-on dist/main/main.js dist/renderer.bundle.js && electron --no-sandbox .\"",
