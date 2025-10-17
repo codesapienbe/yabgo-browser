@@ -1,7 +1,7 @@
 {
   "name": "yabgo-browser",
-  "version": "1.0.0",
-  "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant",
+  "version": "1.1.0",
+  "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant and MCP integration",
   "main": "dist/main/main.js",
   "scripts": {
     "build": "bash scripts/build-all.sh",
@@ -23,17 +23,17 @@
     "desktop-app"
   ],
   "author": {
-    "name": "YABGO Team",
-    "email": "contact@yabgo.com"
+    "name": "Codesapien Network",
+    "email": "yilmaz@codesapien.net"
   },
   "license": "MIT",
-  "homepage": "https://github.com/yabgo/yabgo-browser",
+  "homepage": "https://github.com/codesapienbe/yabgo-browser",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yabgo/yabgo-browser.git"
+    "url": "https://github.com/codesapienbe/yabgo-browser.git"
   },
   "bugs": {
-    "url": "https://github.com/yabgo/yabgo-browser/issues"
+    "url": "https://github.com/codesapienbe/yabgo-browser/issues"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.8",

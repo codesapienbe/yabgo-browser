@@ -11,6 +11,10 @@ export class MCPClientManager extends EventEmitter {
     private clients: Map<string, Client> = new Map();
     private transports: Map<string, StdioClientTransport> = new Map();
     private configs: Map<string, MCPServerConfig> = new Map();
+    private reconnectTimers: Map<string, NodeJS.Timeout> = new Map();
+    // Reserved for future reconnection logic
+    // private readonly MAX_RECONNECT_ATTEMPTS = 3;
+    // private readonly RECONNECT_DELAY = 5000; // 5 seconds
 
     constructor() {
         super();
@@ -61,9 +65,20 @@ export class MCPClientManager extends EventEmitter {
      * Disconnect from an MCP server
      */
     async disconnectServer(serverId: string): Promise<void> {
+        // Clear any reconnection timers
+        const timer = this.reconnectTimers.get(serverId);
+        if (timer) {
+            clearTimeout(timer);
+            this.reconnectTimers.delete(serverId);
+        }
+
         const client = this.clients.get(serverId);
         if (client) {
-            await client.close();
+            try {
+                await client.close();
+            } catch (error) {
+                console.error(`[MCP] Error closing client ${serverId}:`, error);
+            }
             this.clients.delete(serverId);
             this.transports.delete(serverId);
             this.configs.delete(serverId);
@@ -170,8 +185,17 @@ export class MCPClientManager extends EventEmitter {
      * Cleanup all connections
      */
     async cleanup(): Promise<void> {
+        // Clear all reconnection timers
+        for (const timer of this.reconnectTimers.values()) {
+            clearTimeout(timer);
+        }
+        this.reconnectTimers.clear();
+
+        // Disconnect all servers with error handling
         const disconnectPromises = Array.from(this.clients.keys()).map(id =>
-            this.disconnectServer(id)
+            this.disconnectServer(id).catch(error => {
+                console.error(`[MCP] Error disconnecting ${id}:`, error);
+            })
         );
         await Promise.all(disconnectPromises);
     }

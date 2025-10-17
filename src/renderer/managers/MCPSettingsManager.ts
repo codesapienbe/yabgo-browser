@@ -12,6 +12,7 @@ export class MCPSettingsManager extends EventEmitter {
     private serverList: HTMLElement | null = null;
     private indicator: HTMLElement | null = null;
     private indicatorText: HTMLElement | null = null;
+    private renderDebounceTimer: NodeJS.Timeout | null = null;
 
     constructor() {
         super();
@@ -95,7 +96,26 @@ export class MCPSettingsManager extends EventEmitter {
         }
     }
 
+    /**
+     * Debounced render to avoid excessive DOM updates
+     */
     private renderServers(): void {
+        // Clear any pending render
+        if (this.renderDebounceTimer) {
+            clearTimeout(this.renderDebounceTimer);
+        }
+
+        // Schedule render with debounce
+        this.renderDebounceTimer = setTimeout(() => {
+            this.renderServersImmediate();
+            this.renderDebounceTimer = null;
+        }, 100);
+    }
+
+    /**
+     * Immediate render without debounce
+     */
+    private renderServersImmediate(): void {
         if (!this.serverList) return;
 
         if (this.servers.length === 0) {

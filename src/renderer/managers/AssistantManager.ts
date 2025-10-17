@@ -148,18 +148,26 @@ export class AssistantManager extends EventEmitter {
         const [, serverName, toolName, paramsStr] = mcpMatch;
 
         try {
-            // Find server by name
-            const serversResponse = await mcpBridge.getServers();
+            // Find server by name with timeout
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Server lookup timed out')), 5000)
+            );
+
+            const serversResponse = await Promise.race([
+                mcpBridge.getServers(),
+                timeoutPromise
+            ]) as any;
+
             if (!serversResponse.success || !serversResponse.servers) {
                 return 'Failed to load MCP servers. Please check your configuration.';
             }
 
-            const server = serversResponse.servers.find(s =>
+            const server = serversResponse.servers.find((s: any) =>
                 s.name.toLowerCase() === serverName.toLowerCase()
             );
 
             if (!server) {
-                const availableServers = serversResponse.servers.map(s => s.name).join(', ');
+                const availableServers = serversResponse.servers.map((s: any) => s.name).join(', ');
                 return `Server '${serverName}' not found.\n\nAvailable servers: ${availableServers || 'none'}`;
             }
 
