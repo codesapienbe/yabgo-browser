@@ -10,6 +10,8 @@ export class MCPSettingsManager extends EventEmitter {
     private settingsModal: HTMLElement | null = null;
     private formModal: HTMLElement | null = null;
     private serverList: HTMLElement | null = null;
+    private indicator: HTMLElement | null = null;
+    private indicatorText: HTMLElement | null = null;
 
     constructor() {
         super();
@@ -25,6 +27,8 @@ export class MCPSettingsManager extends EventEmitter {
         this.settingsModal = document.getElementById('mcpSettingsModal');
         this.formModal = document.getElementById('mcpServerFormModal');
         this.serverList = document.getElementById('mcpServerList');
+        this.indicator = document.getElementById('mcpIndicator');
+        this.indicatorText = this.indicator?.querySelector('.mcp-indicator-text') || null;
     }
 
     private setupEventListeners(): void {
@@ -65,6 +69,11 @@ export class MCPSettingsManager extends EventEmitter {
             this.hideFormModal();
         });
 
+        // Indicator click to open settings
+        this.indicator?.addEventListener('click', () => {
+            this.showSettingsModal();
+        });
+
         // Listen for server events from MCP
         mcpBridge.onServerConnected((serverId) => {
             console.log(`[MCP UI] Server connected: ${serverId}`);
@@ -82,6 +91,7 @@ export class MCPSettingsManager extends EventEmitter {
         if (response.success && response.servers) {
             this.servers = response.servers;
             this.renderServers();
+            this.updateIndicator();
         }
     }
 
@@ -193,6 +203,7 @@ export class MCPSettingsManager extends EventEmitter {
         if (response.success) {
             this.servers.push(config);
             this.renderServers();
+            this.updateIndicator();
             this.hideFormModal();
             this.showSuccess(`Server "${name}" connected successfully!`);
         } else {
@@ -219,6 +230,7 @@ export class MCPSettingsManager extends EventEmitter {
             if (response.success) {
                 this.servers = this.servers.filter(s => s.id !== serverId);
                 this.renderServers();
+                this.updateIndicator();
                 this.showSuccess('Server deleted successfully');
             } else {
                 this.showError(response.error || 'Failed to delete server');
@@ -260,6 +272,53 @@ export class MCPSettingsManager extends EventEmitter {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Update MCP indicator
+     */
+    private updateIndicator(): void {
+        if (!this.indicator || !this.indicatorText) return;
+
+        const enabledServers = this.servers.filter(s => s.enabled);
+        const count = enabledServers.length;
+
+        if (count === 0) {
+            this.indicator.classList.add('hidden');
+        } else {
+            this.indicator.classList.remove('hidden');
+            this.indicatorText.textContent = `${count} MCP`;
+
+            // Update indicator class based on status
+            this.indicator.classList.remove('active', 'error');
+        }
+    }
+
+    /**
+     * Set indicator to active state (when tool is being called)
+     */
+    public setIndicatorActive(active: boolean): void {
+        if (!this.indicator) return;
+
+        if (active) {
+            this.indicator.classList.add('active');
+        } else {
+            this.indicator.classList.remove('active');
+        }
+    }
+
+    /**
+     * Set indicator to error state
+     */
+    public setIndicatorError(hasError: boolean): void {
+        if (!this.indicator) return;
+
+        if (hasError) {
+            this.indicator.classList.add('error');
+            setTimeout(() => {
+                this.indicator?.classList.remove('error');
+            }, 3000);
+        }
     }
 }
 
