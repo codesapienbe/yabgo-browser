@@ -28,6 +28,18 @@ export class MCPBridge {
         return await (window as any).electron.ipcRenderer.invoke('mcp:delete-server', serverId);
     }
 
+    async updateContext(data: { url: string; title: string; selection?: string }): Promise<{ success: boolean; context?: any; error?: string }> {
+        return await (window as any).electron.ipcRenderer.invoke('mcp:update-context', data);
+    }
+
+    async getContext(): Promise<{ success: boolean; context?: any; error?: string }> {
+        return await (window as any).electron.ipcRenderer.invoke('mcp:get-context');
+    }
+
+    async getContextHistory(limit?: number): Promise<{ success: boolean; history?: any[]; error?: string }> {
+        return await (window as any).electron.ipcRenderer.invoke('mcp:get-context-history', limit);
+    }
+
     onServerConnected(callback: (serverId: string) => void): () => void {
         const handler = (_event: any, serverId: string) => callback(serverId);
         (window as any).electron.ipcRenderer.on('mcp:server-connected', handler);

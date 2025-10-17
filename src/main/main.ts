@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import { WindowManager } from './managers/WindowManager';
 import { DatabaseManager } from './managers/DatabaseManager';
 import { MCPClientManager } from './managers/MCPClientManager';
+import { MCPContextManager } from './managers/MCPContextManager';
 import { IPCManager } from './managers/IPCManager';
 import { Logger } from '../shared/utils/Logger';
 
@@ -12,6 +13,7 @@ class YabgoApp {
     private windowManager: WindowManager;
     private readonly databaseManager: DatabaseManager;
     private readonly mcpClientManager: MCPClientManager;
+    private readonly mcpContextManager: MCPContextManager;
     private ipcManager: IPCManager;
     private logger: Logger;
 
@@ -21,9 +23,15 @@ class YabgoApp {
 
         this.databaseManager = new DatabaseManager();
         this.mcpClientManager = new MCPClientManager();
+        this.mcpContextManager = new MCPContextManager();
         this.windowManager = new WindowManager();
         // Pass managers into IPCManager
-        this.ipcManager = new IPCManager(this.databaseManager, this.windowManager, this.mcpClientManager);
+        this.ipcManager = new IPCManager(
+            this.databaseManager,
+            this.windowManager,
+            this.mcpClientManager,
+            this.mcpContextManager
+        );
     }
 
     /**

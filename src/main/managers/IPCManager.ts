@@ -2,6 +2,7 @@ import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import { WindowManager } from './WindowManager';
 import { DatabaseManager } from './DatabaseManager';
 import { MCPClientManager } from './MCPClientManager';
+import { MCPContextManager } from './MCPContextManager';
 import { AssistantService } from '../services/AssistantService';
 import { PageMetadata, AssistantResponse } from '../../shared/types/DataTypes';
 import { MCPServerConfig, MCPToolCall } from '../../types/mcp.types';
@@ -15,14 +16,21 @@ export class IPCManager {
     private assistantService: AssistantService;
     private windowManager: WindowManager;
     private mcpClientManager: MCPClientManager;
+    private mcpContextManager: MCPContextManager;
     private logger: Logger;
 
-    constructor(databaseManager: DatabaseManager, windowManager: WindowManager, mcpClientManager: MCPClientManager) {
+    constructor(
+        databaseManager: DatabaseManager,
+        windowManager: WindowManager,
+        mcpClientManager: MCPClientManager,
+        mcpContextManager: MCPContextManager
+    ) {
         this.databaseManager = databaseManager;
         this.assistantService = new AssistantService(databaseManager);
         // Use the WindowManager instance provided by the app instead of creating a new one
         this.windowManager = windowManager;
         this.mcpClientManager = mcpClientManager;
+        this.mcpContextManager = mcpContextManager;
         this.logger = new Logger('IPCManager');
     }
 
@@ -209,6 +217,39 @@ export class IPCManager {
                 return { success: true };
             } catch (error) {
                 this.logger.error('[IPC] MCP delete server error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Extract and update context
+        ipcMain.handle('mcp:update-context', async (_event, data: { url: string; title: string; selection?: string }) => {
+            try {
+                const context = this.mcpContextManager.extractContext(data);
+                return { success: true, context };
+            } catch (error) {
+                this.logger.error('[IPC] MCP update context error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Get current context
+        ipcMain.handle('mcp:get-context', async () => {
+            try {
+                const context = this.mcpContextManager.getCurrentContext();
+                return { success: true, context };
+            } catch (error) {
+                this.logger.error('[IPC] MCP get context error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Get context history
+        ipcMain.handle('mcp:get-context-history', async (_event, limit?: number) => {
+            try {
+                const history = this.mcpContextManager.getContextHistory(limit);
+                return { success: true, history };
+            } catch (error) {
+                this.logger.error('[IPC] MCP get context history error:', error);
                 return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
             }
         });

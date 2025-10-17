@@ -2,6 +2,7 @@ import { EventEmitter } from '../utils/EventEmitter';
 import { Tab, TabCreationOptions } from '../../shared/types/DataTypes';
 import { Logger } from '../../shared/utils/Logger';
 import { URLHelper } from '../../shared/utils/URLHelper';
+import { mcpBridge } from '../bridge/mcp.bridge';
 
 /**
  * Tab state cache interface for storing tab DOM and state
@@ -454,11 +455,15 @@ export class TabManager extends EventEmitter {
 
         webview.addEventListener('did-stop-loading', () => {
             this.updateTab(tabId, { isLoading: false });
+            // Extract context for MCP when page finishes loading
+            this.extractPageContext(webview, tabId);
         });
 
         webview.addEventListener('page-title-updated', (event) => {
             const title = (event as any).title;
             this.updateTab(tabId, { title });
+            // Update context when title changes
+            this.extractPageContext(webview, tabId);
         });
 
         webview.addEventListener('page-favicon-updated', (event) => {
@@ -795,6 +800,42 @@ export class TabManager extends EventEmitter {
     private truncateTitle(title: string, maxLength: number = 20): string {
         if (title.length <= maxLength) return title;
         return title.substring(0, maxLength - 3) + '...';
+    }
+
+    /**
+     * Extract page context for MCP servers
+     */
+    private async extractPageContext(webview: Electron.WebviewTag, tabId: string): Promise<void> {
+        try {
+            const tab = this.tabs.get(tabId);
+            if (!tab || !webview.src || webview.src.startsWith('about:')) {
+                return;
+            }
+
+            // Get selection from webview if available
+            let selection: string | undefined;
+            try {
+                selection = await webview.executeJavaScript('window.getSelection().toString()');
+                if (selection && selection.trim().length === 0) {
+                    selection = undefined;
+                }
+            } catch (err) {
+                // Ignore selection extraction errors
+                selection = undefined;
+            }
+
+            // Send context to MCP
+            const contextData = {
+                url: tab.url || '',
+                title: tab.title || 'Untitled',
+                selection
+            };
+
+            await mcpBridge.updateContext(contextData);
+            this.logger.debug(`Context extracted for tab: ${tabId}`);
+        } catch (error) {
+            this.logger.error('Failed to extract page context:', error);
+        }
     }
 
     /**
