@@ -44,6 +44,11 @@ export class WindowManager {
         this.mainWindow.loadFile(htmlPath);
         this.mainWindow.setMenuBarVisibility(false);
 
+        // Start maximized
+        this.mainWindow.maximize();
+
+        // Auto-open DevTools removed
+
         this.setupWindowEvents();
 
         this.logger.info('Main window created successfully');

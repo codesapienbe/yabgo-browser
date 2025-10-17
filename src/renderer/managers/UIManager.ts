@@ -190,6 +190,9 @@ export class UIManager extends EventEmitter {
         const input = this.unifiedInput?.value?.trim();
         if (!input) return;
 
+        // Ensure input UI is removed for all scenarios
+        this.hideInput();
+
         // Check if it's a domain
         const isDomain = URLHelper['isDomain'](input) || input.includes('://');
 
@@ -512,6 +515,13 @@ export class UIManager extends EventEmitter {
         if (!overlay) return;
         overlay.classList.remove('show');
         overlay.innerHTML = '';
+    }
+
+    /**
+     * Restore input container (public wrapper for showInput)
+     */
+    public restoreInput(): void {
+        this.showInput();
     }
 
     /**

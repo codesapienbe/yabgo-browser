@@ -162,6 +162,14 @@ export class TabManager extends EventEmitter {
             cache.isReader = false;
             this.tabCache.set(id, cache);
             this.emit('reader-mode', id, false);
+            // Clear reader preference for site
+            try {
+                const url = activeTab.url || '';
+                const site = new URL(url).hostname;
+                const prefs = JSON.parse(localStorage.getItem('readerPrefs') || '{}');
+                delete prefs[site];
+                localStorage.setItem('readerPrefs', JSON.stringify(prefs));
+            } catch (e) { }
             return;
         }
 
@@ -216,6 +224,14 @@ export class TabManager extends EventEmitter {
             cache.isReader = true;
             this.tabCache.set(id, cache);
             this.emit('reader-mode', id, true);
+            // Persist reader preference for site
+            try {
+                const url = activeTab.url || '';
+                const site = new URL(url).hostname;
+                const prefs = JSON.parse(localStorage.getItem('readerPrefs') || '{}');
+                prefs[site] = true;
+                localStorage.setItem('readerPrefs', JSON.stringify(prefs));
+            } catch (e) { }
         } catch (e) {
             this.logger.error('Failed to extract reader content:', e);
         }

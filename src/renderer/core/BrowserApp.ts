@@ -60,7 +60,8 @@ export class BrowserApp {
         // Tab events
         this.tabManager.on('tab-created', (tab: any) => {
             this.logger.debug(`Tab created: ${tab.id}`);
-            // Auto-focus input when new tab is created
+            // Restore and auto-focus input when new tab is created
+            this.uiManager.restoreInput();
             this.uiManager.focusInput();
         });
 
@@ -68,6 +69,16 @@ export class BrowserApp {
             this.logger.debug(`Tab switched: ${tab.id}`);
             // Update navigation manager with current tab
             this.navigationManager.setActiveTab(tab.id);
+            // Restore input unless reader preference is enabled for this site
+            try {
+                const site = new URL(tab.url || '').hostname;
+                const prefs = JSON.parse(localStorage.getItem('readerPrefs') || '{}');
+                if (!prefs[site]) {
+                    this.uiManager.restoreInput();
+                }
+            } catch (e) {
+                this.uiManager.restoreInput();
+            }
         });
 
         this.tabManager.on('tab-closed', (tabId: string) => {
@@ -130,6 +141,44 @@ export class BrowserApp {
             }
         });
 
+        // Keyboard shortcut: Ctrl/Cmd + Shift + R to toggle reader
+        document.addEventListener('keydown', async (e: KeyboardEvent) => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const modifier = isMac ? e.metaKey : e.ctrlKey;
+            if (modifier && e.shiftKey && e.key.toLowerCase() === 'r') {
+                const activeTab = this.tabManager.getActiveTab();
+                if (activeTab) {
+                    await this.tabManager.toggleReader(activeTab.id);
+                }
+            }
+        });
+
+        // Persist reader-mode preference per site when TabManager emits reader-mode
+        this.tabManager.on('reader-mode', (_tabId: string, enabled: boolean) => {
+            const tab = this.tabManager.getActiveTab();
+            if (!tab) return;
+            const url = tab.url || '';
+            try {
+                const site = new URL(url).hostname;
+                const prefs = JSON.parse(localStorage.getItem('readerPrefs') || '{}');
+                prefs[site] = enabled;
+                localStorage.setItem('readerPrefs', JSON.stringify(prefs));
+            } catch (e) {
+                // ignore invalid URL
+            }
+        });
+
+        // On tab switch, auto-enter reader mode if preference exists
+        this.tabManager.on('tab-switched', (tab: any) => {
+            try {
+                const site = new URL(tab.url || '').hostname;
+                const prefs = JSON.parse(localStorage.getItem('readerPrefs') || '{}');
+                if (prefs[site]) {
+                    this.tabManager.toggleReader(tab.id);
+                }
+            } catch (e) { }
+        });
+
         // TabManager emits reader-content when markdown is ready
         this.tabManager.on('reader-content', (_tabId: string, markdown: string) => {
             this.uiManager.showReader(markdown);
@@ -139,6 +188,7 @@ export class BrowserApp {
         this.tabManager.on('reader-mode', (_tabId: string, enabled: boolean) => {
             if (!enabled) {
                 this.uiManager.hideReader();
+                this.uiManager.restoreInput();
             }
         });
 
