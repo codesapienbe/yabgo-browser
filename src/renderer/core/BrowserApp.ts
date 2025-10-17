@@ -72,6 +72,13 @@ export class BrowserApp {
             this.logger.debug(`Tab closed: ${tabId}`);
         });
 
+        this.tabManager.on('tab-updated', (tab: any) => {
+            // Hide loading when page finishes loading
+            if (!tab.isLoading) {
+                this.uiManager.hideLoading();
+            }
+        });
+
         // Navigation events
         this.navigationManager.on('navigation', (url: string) => {
             this.historyManager.addToHistory(url);

@@ -1,4 +1,22 @@
-.PHONY: run build dev test clean install release
+.PHONY: run build dev test clean install release prod help
+
+help:
+	@echo "YABGO Browser - Available Make Targets"
+	@echo ""
+	@echo "Development:"
+	@echo "  make dev          - Run in development mode (watch mode, hot reload)"
+	@echo "  make run          - Build and run in production mode (real-world experience)"
+	@echo ""
+	@echo "Building:"
+	@echo "  make build        - Build distribution (AppImage on Linux, installer on Windows)"
+	@echo "  make prod         - Production build and run with Electron"
+	@echo "  make release      - Create release distribution"
+	@echo ""
+	@echo "Maintenance:"
+	@echo "  make install      - Install dependencies"
+	@echo "  make test         - Run tests"
+	@echo "  make clean        - Clean build artifacts"
+	@echo ""
 
 install:
 	npm install
@@ -21,6 +39,9 @@ build:
 
 dev:
 	npm run dev
+
+prod:
+	npm run prod
 
 test:
 	npm run test

@@ -1,5 +1,6 @@
 import { EventEmitter } from '../utils/EventEmitter';
 import { Logger } from '../../shared/utils/Logger';
+import { URLHelper } from '../../shared/utils/URLHelper';
 
 /**
  * Manages UI interactions and state
@@ -8,10 +9,11 @@ export class UIManager extends EventEmitter {
     private unifiedInput: HTMLInputElement | null = null;
     private inputBtn: HTMLButtonElement | null = null;
     private inputContainer: HTMLElement | null = null;
-    private floatingButton: HTMLElement | null = null;
+    private inputWrapper: HTMLElement | null = null;
     private assistantResponse: HTMLElement | null = null;
 
     private isScrolling: boolean = false;
+    private isLoading: boolean = false;
     private scrollTimeout: number | null = null;
     private logger: Logger;
 
@@ -39,11 +41,11 @@ export class UIManager extends EventEmitter {
         this.unifiedInput = document.getElementById('unifiedInput') as HTMLInputElement;
         this.inputBtn = document.getElementById('inputBtn') as HTMLButtonElement;
         this.inputContainer = document.getElementById('inputContainer') as HTMLElement;
-        this.floatingButton = document.getElementById('floatingButton') as HTMLElement;
+        this.inputWrapper = document.querySelector('.input-wrapper') as HTMLElement;
         this.assistantResponse = document.getElementById('assistantResponse') as HTMLElement;
 
         if (!this.unifiedInput || !this.inputBtn || !this.inputContainer ||
-            !this.floatingButton || !this.assistantResponse) {
+            !this.assistantResponse) {
             throw new Error('Required UI elements not found');
         }
     }
@@ -71,7 +73,6 @@ export class UIManager extends EventEmitter {
         this.unifiedInput?.addEventListener('focus', this.handleInputFocus.bind(this));
         this.unifiedInput?.addEventListener('blur', this.handleInputBlur.bind(this));
         this.inputBtn?.addEventListener('click', this.handleInputSubmit.bind(this));
-        this.floatingButton?.addEventListener('click', this.showInput.bind(this));
 
         // Scroll messages from webview
         window.addEventListener('message', this.handleScrollMessage.bind(this));
@@ -141,7 +142,6 @@ export class UIManager extends EventEmitter {
     private handleInputFocus(): void {
         this.centerInput();
         this.showInput();
-        this.hideFloatingButton();
     }
 
     /**
@@ -152,7 +152,6 @@ export class UIManager extends EventEmitter {
         if (this.unifiedInput && !this.unifiedInput.value.trim()) {
             setTimeout(() => {
                 this.bottomInput();
-                this.showFloatingButton();
             }, 150); // Small delay to allow for focus transitions
         }
     }
@@ -178,15 +177,27 @@ export class UIManager extends EventEmitter {
         const input = this.unifiedInput?.value?.trim();
         if (!input) return;
 
+        // Check if it's a domain
+        const isDomain = URLHelper['isDomain'](input) || input.includes('://');
+
         // Check if it's an assistant command
         if (this.isAssistantCommand(input)) {
             this.emit('assistant-query', input);
         } else {
+            this.showLoading();
             this.emit('navigate', input);
         }
 
-        if (this.unifiedInput) {
+        // Only clear input if it's NOT a domain
+        if (this.unifiedInput && !isDomain) {
             this.unifiedInput.value = '';
+        }
+
+        // Blur after a small delay to allow events to process
+        if (this.unifiedInput) {
+            setTimeout(() => {
+                this.unifiedInput?.blur();
+            }, 50);
         }
     }
 
@@ -218,8 +229,10 @@ export class UIManager extends EventEmitter {
 
         if (direction === 'down') {
             this.hideInput();
-            this.showFloatingButton();
             this.isScrolling = true;
+            if (this.unifiedInput) {
+                this.unifiedInput.readOnly = true;
+            }
         } else if (direction === 'up') {
             this.scrollTimeout = window.setTimeout(() => {
                 if (this.isScrolling) {
@@ -229,8 +242,11 @@ export class UIManager extends EventEmitter {
                     } else {
                         this.bottomInput();
                     }
-                    this.hideFloatingButton();
                     this.isScrolling = false;
+                    // Only enable input if not loading
+                    if (this.unifiedInput && !this.isLoading) {
+                        this.unifiedInput.readOnly = false;
+                    }
                 }
             }, 500);
         }
@@ -268,21 +284,6 @@ export class UIManager extends EventEmitter {
      */
     private showInput(): void {
         this.inputContainer?.classList.remove('hidden');
-        this.hideFloatingButton();
-    }
-
-    /**
-     * Show floating button
-     */
-    private showFloatingButton(): void {
-        this.floatingButton?.classList.add('show');
-    }
-
-    /**
-     * Hide floating button
-     */
-    private hideFloatingButton(): void {
-        this.floatingButton?.classList.remove('show');
     }
 
     /**
@@ -365,7 +366,11 @@ export class UIManager extends EventEmitter {
      * Show loading state
      */
     public showLoading(): void {
-        // Could add loading indicator
+        this.isLoading = true;
+        this.inputWrapper?.classList.add('loading');
+        if (this.unifiedInput) {
+            this.unifiedInput.readOnly = true;
+        }
         this.logger.debug('Loading started');
     }
 
@@ -373,7 +378,11 @@ export class UIManager extends EventEmitter {
      * Hide loading state
      */
     public hideLoading(): void {
-        // Could remove loading indicator
+        this.isLoading = false;
+        this.inputWrapper?.classList.remove('loading');
+        if (this.unifiedInput && !this.isScrolling) {
+            this.unifiedInput.readOnly = false;
+        }
         this.logger.debug('Loading stopped');
     }
 

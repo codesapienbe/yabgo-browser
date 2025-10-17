@@ -28,6 +28,7 @@ export class TabManager extends EventEmitter {
         this.setupEventListeners();
         this.setupMessageListener();
         this.renderTabs();
+        this.renderWebviews();
 
         this.logger.info('Tab manager initialized');
     }

@@ -430,6 +430,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: auto;
+    opacity: 1;
 }
 
 .input-container.bottom {
@@ -437,10 +438,16 @@ body {
     left: 50%;
     transform: translateX(-50%);
     pointer-events: auto;
+    opacity: 0.15;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-container.bottom:hover {
+    opacity: 0.5;
 }
 
 .input-container.hidden {
-    opacity: 0;
+    opacity: 0.05;
     transform: translate(-50%, -50%) scale(0.95);
     pointer-events: none;
 }
@@ -455,6 +462,27 @@ body {
     border-radius: 50px;
     padding: 8px 8px 8px 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.input-wrapper.loading {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 10px 40px rgba(96, 165, 250, 0.2);
+}
+
+.input-wrapper.loading::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(96, 165, 250, 0.3);
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
 .unified-input {
@@ -469,6 +497,15 @@ body {
 
 .unified-input::placeholder {
     color: rgba(255, 255, 255, 0.4);
+}
+
+.unified-input:read-only {
+    cursor: not-allowed;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.unified-input:read-only::placeholder {
+    color: rgba(255, 255, 255, 0.2);
 }
 
 .input-btn {
@@ -494,51 +531,6 @@ body {
 
 .input-btn:active {
     transform: scale(0.95);
-}
-
-/* Floating Button */
-.floating-button {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #60a5fa, #3b82f6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 8px 30px rgba(96, 165, 250, 0.4);
-    transition: all 0.3s ease;
-    pointer-events: auto;
-}
-
-.floating-button.show {
-    display: flex;
-    animation: floatIn 0.3s ease-out;
-}
-
-@keyframes floatIn {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) scale(0.8);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(-50%) scale(1);
-    }
-}
-
-.floating-button:hover {
-    transform: translateX(-50%) scale(1.1);
-    box-shadow: 0 12px 40px rgba(96, 165, 250, 0.5);
-}
-
-.floating-icon {
-    font-size: 24px;
 }
 
 /* Loading Indicator */

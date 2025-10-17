@@ -31,7 +31,8 @@ export class WindowManager {
                 contextIsolation: true,
                 webviewTag: true,
                 webSecurity: true,
-                allowRunningInsecureContent: false
+                allowRunningInsecureContent: false,
+                sandbox: false
             }
         };
 
