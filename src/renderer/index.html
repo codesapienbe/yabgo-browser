@@ -17,6 +17,7 @@
                 <div class="version">v1.0.0</div>
             </div>
             <div class="title-bar-right">
+                <button class="window-btn reader-btn" id="readerToggle" title="Reader">R</button>
                 <button class="window-btn minimize-btn" id="minimizeBtn" title="Minimize">−</button>
                 <button class="window-btn maximize-btn" id="maximizeBtn" title="Maximize">□</button>
                 <button class="window-btn close-btn" id="closeBtn" title="Close">×</button>
@@ -60,6 +61,8 @@
         <div class="loading-indicator" id="loadingIndicator">
             <div class="loading-bar"></div>
         </div>
+        <!-- Reader overlay -->
+        <div id="readerOverlay" class="reader-overlay"></div>
     </div>
 
     <script src="renderer.bundle.js"></script>

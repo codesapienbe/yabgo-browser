@@ -121,6 +121,27 @@ export class BrowserApp {
             this.uiManager.setSearchMode(enabled);
         });
 
+        // Reader toggle
+        const readerToggle = document.getElementById('readerToggle');
+        readerToggle?.addEventListener('click', async () => {
+            const activeTab = this.tabManager.getActiveTab();
+            if (activeTab) {
+                await this.tabManager.toggleReader(activeTab.id);
+            }
+        });
+
+        // TabManager emits reader-content when markdown is ready
+        this.tabManager.on('reader-content', (_tabId: string, markdown: string) => {
+            this.uiManager.showReader(markdown);
+        });
+
+        // TabManager emits reader-mode when toggled
+        this.tabManager.on('reader-mode', (_tabId: string, enabled: boolean) => {
+            if (!enabled) {
+                this.uiManager.hideReader();
+            }
+        });
+
         // Gesture events
         this.gestureManager.on('back', () => this.tabManager.goBack());
         this.gestureManager.on('forward', () => this.tabManager.goForward());

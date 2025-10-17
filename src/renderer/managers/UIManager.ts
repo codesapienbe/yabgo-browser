@@ -489,6 +489,32 @@ export class UIManager extends EventEmitter {
     }
 
     /**
+     * Show reader overlay with markdown content
+     */
+    public showReader(markdown: string): void {
+        let overlay = document.getElementById('readerOverlay') as HTMLElement | null;
+        if (!overlay) return;
+
+        overlay.innerHTML = `<div class="reader-close" id="readerClose">×</div><div class="reader-content">${markdown}</div>`;
+        overlay.classList.add('show');
+
+        const closeBtn = document.getElementById('readerClose');
+        closeBtn?.addEventListener('click', () => {
+            this.hideReader();
+        });
+    }
+
+    /**
+     * Hide reader overlay
+     */
+    public hideReader(): void {
+        const overlay = document.getElementById('readerOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        overlay.innerHTML = '';
+    }
+
+    /**
      * Cleanup resources
      */
     public cleanup(): void {

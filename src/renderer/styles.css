@@ -626,3 +626,39 @@ body {
         /* Prevent iOS zoom */
     }
 }
+
+.reader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 10, 0.95);
+    color: #fff;
+    z-index: 2000;
+    display: none;
+    overflow: auto;
+    padding: 40px;
+}
+
+.reader-overlay.show {
+    display: block;
+}
+
+.reader-close {
+    position: fixed;
+    right: 24px;
+    top: 24px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.reader-content {
+    max-width: 900px;
+    margin: 0 auto;
+    line-height: 1.6;
+    font-size: 18px;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    border-radius: 8px;
+}

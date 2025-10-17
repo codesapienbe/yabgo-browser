@@ -11,6 +11,7 @@ interface TabCache {
     scrollPosition?: { x: number; y: number };
     lastLoadedUrl?: string;
     createdAt?: number;
+    isReader?: boolean;
 }
 
 /**
@@ -134,10 +135,90 @@ export class TabManager extends EventEmitter {
                 window.dispatchEvent(new MessageEvent('message', {
                     data: event.data
                 }));
+            } else if (event.data.type === 'reader-content') {
+                // Emit reader content to app
+                const tabId = event.data.tabId;
+                const markdown = event.data.markdown;
+                this.emit('reader-content', tabId, markdown);
             }
         });
 
         this.messageListenerSetup = true;
+    }
+
+    /**
+     * Toggle reader mode for the active tab
+     */
+    public async toggleReader(tabId?: string): Promise<void> {
+        const activeTab = tabId ? this.tabs.get(tabId) : this.getActiveTab();
+        if (!activeTab) return;
+
+        const id = activeTab.id;
+        const cache = this.tabCache.get(id) || {};
+        const isReader = !!cache.isReader;
+
+        if (isReader) {
+            // Exit reader mode
+            cache.isReader = false;
+            this.tabCache.set(id, cache);
+            this.emit('reader-mode', id, false);
+            return;
+        }
+
+        // Enter reader mode: extract content and post markdown back
+        const webview = document.getElementById(`webview-${id}`) as Electron.WebviewTag | null;
+        if (!webview) return;
+
+        try {
+            await webview.executeJavaScript(`(function() {
+                function escapeHtml(s){return s}
+
+                function nodeToMarkdown(node){
+                    if(!node) return '';
+                    const nodeName = node.nodeName.toLowerCase();
+                    if(nodeName === '#text'){
+                        return node.textContent.replace(/\s+/g,' ').trim();
+                    }
+                    if(['script','style','noscript'].includes(nodeName)) return '';
+                    if(nodeName.match(/^h[1-6]$/)){
+                        const level = parseInt(nodeName.charAt(1));
+                        return '\n' + '#'.repeat(level) + ' ' + (node.textContent || '') + '\n\n';
+                    }
+                    if(nodeName === 'p'){
+                        return (Array.from(node.childNodes).map(nodeToMarkdown).join('') || '') + '\n\n';
+                    }
+                    if(nodeName === 'li'){
+                        return '- ' + (Array.from(node.childNodes).map(nodeToMarkdown).join('')) + '\n';
+                    }
+                    if(nodeName === 'ul' || nodeName === 'ol'){
+                        return Array.from(node.children).map(nodeToMarkdown).join('') + '\n';
+                    }
+                    if(nodeName === 'a'){
+                        const href = node.getAttribute('href') || '';
+                        const text = node.textContent || href;
+                        return '[' + text + '](' + href + ')';
+                    }
+                    if(nodeName === 'img'){
+                        const src = node.getAttribute('src') || '';
+                        const alt = node.getAttribute('alt') || '';
+                        return '![' + alt + '](' + src + ')';
+                    }
+                    // Default: recurse
+                    return Array.from(node.childNodes).map(nodeToMarkdown).join('');
+                }
+
+                var root = document.querySelector('article') || document.querySelector('main') || document.querySelector('div[itemprop="articleBody"]') || document.body;
+                var md = nodeToMarkdown(root);
+                window.postMessage({ type: 'reader-content', tabId: '${id}', markdown: md }, '*');
+            })();`);
+
+            // mark reader mode pending
+            cache.isReader = true;
+            this.tabCache.set(id, cache);
+            this.emit('reader-mode', id, true);
+        } catch (e) {
+            this.logger.error('Failed to extract reader content:', e);
+        }
     }
 
     /**
