@@ -43,6 +43,8 @@ export class AssistantManager extends EventEmitter {
             // Handle Perplexity navigation responses
             if (response.type === 'navigate' && response.url) {
                 this.logger.info(`Navigating to Perplexity: ${response.url}`);
+                // Emit search-mode event to indicate we're in search/Perplexity mode
+                this.emit('search-mode', true);
                 this.emit('navigate', response.url);
                 this.emit('response', response);
                 return;

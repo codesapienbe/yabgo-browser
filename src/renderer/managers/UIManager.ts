@@ -14,6 +14,7 @@ export class UIManager extends EventEmitter {
 
     private isScrolling: boolean = false;
     private isLoading: boolean = false;
+    private isSearchMode: boolean = false;
     private scrollTimeout: number | null = null;
     private logger: Logger;
 
@@ -407,6 +408,31 @@ export class UIManager extends EventEmitter {
             this.unifiedInput.readOnly = false;
         }
         this.logger.debug('Loading stopped');
+    }
+
+    /**
+     * Enter search mode (hides URL field for Perplexity searches)
+     */
+    public setSearchMode(enabled: boolean): void {
+        this.isSearchMode = enabled;
+
+        if (enabled) {
+            // Hide URL input in search mode
+            this.hideInput();
+            this.logger.debug('Entered search mode - URL field hidden');
+        } else {
+            // Show URL input when exiting search mode
+            this.showInput();
+            this.bottomInput();
+            this.logger.debug('Exited search mode - URL field visible');
+        }
+    }
+
+    /**
+     * Check if in search mode
+     */
+    public isInSearchMode(): boolean {
+        return this.isSearchMode;
     }
 
     /**

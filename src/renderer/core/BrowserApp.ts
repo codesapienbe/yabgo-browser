@@ -85,6 +85,12 @@ export class BrowserApp {
         this.navigationManager.on('navigation', (url: string) => {
             this.historyManager.addToHistory(url);
             this.uiManager.updateAddressBar(url);
+
+            // Exit search mode if navigating to a non-Perplexity URL
+            if (this.uiManager.isInSearchMode() && !url.includes('perplexity.ai')) {
+                this.uiManager.setSearchMode(false);
+            }
+
             // Update current tab URL
             const activeTab = this.tabManager.getActiveTab();
             if (activeTab) {
@@ -109,6 +115,10 @@ export class BrowserApp {
         this.assistantManager.on('navigate', (url: string) => {
             this.tabManager.navigate(url);
             this.uiManager.hideAssistantResponse();
+        });
+
+        this.assistantManager.on('search-mode', (enabled: boolean) => {
+            this.uiManager.setSearchMode(enabled);
         });
 
         // Gesture events

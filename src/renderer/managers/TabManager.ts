@@ -375,6 +375,10 @@ export class TabManager extends EventEmitter {
             if (webview.src && !webview.src.startsWith('about:')) {
                 this.setupScrollDetection(webview);
             }
+            // Auto-accept cookies for Perplexity
+            if (webview.src && webview.src.includes('perplexity.ai')) {
+                this.autoAcceptPerplexityCookies(webview);
+            }
         });
     }
 
@@ -409,6 +413,56 @@ export class TabManager extends EventEmitter {
             window.addEventListener('scroll', requestScrollUpdate, { passive: true });
         `).catch(_err => {
             this.logger.debug('Scroll detection setup completed or not needed');
+        });
+    }
+
+    /**
+     * Auto-accept cookies on Perplexity
+     */
+    private autoAcceptPerplexityCookies(webview: Electron.WebviewTag): void {
+        webview.executeJavaScript(`
+            (function autoAcceptCookies() {
+                // Common cookie accept button selectors used by various sites
+                const selectors = [
+                    'button[id*="cookie"][id*="accept"]',
+                    'button[data-test*="cookie-accept"]',
+                    'button:has-text("Accept")',
+                    '.cookie-accept',
+                    'button[aria-label*="accept"]',
+                    'button[aria-label*="cookie"]',
+                    'button:contains("Accept All")',
+                    'button:contains("Accept")',
+                    'a[id*="cookie-accept"]',
+                    '[role="button"][aria-label*="accept"]'
+                ];
+
+                // Try to find and click the accept button
+                for (const selector of selectors) {
+                    try {
+                        const button = document.querySelector(selector);
+                        if (button && button.textContent?.toLowerCase().includes('accept')) {
+                            button.click();
+                            console.log('Cookie accepted on Perplexity');
+                            return;
+                        }
+                    } catch (e) {
+                        // Selector might not be valid, continue to next
+                    }
+                }
+
+                // Fallback: Look for any button with accept text
+                const buttons = document.querySelectorAll('button');
+                for (const btn of buttons) {
+                    if (btn.textContent?.toLowerCase().includes('accept') && 
+                        btn.textContent?.toLowerCase().includes('cookie')) {
+                        btn.click();
+                        console.log('Cookie accepted on Perplexity (fallback)');
+                        return;
+                    }
+                }
+            })();
+        `).catch(_err => {
+            this.logger.debug('Cookie auto-accept setup completed for Perplexity');
         });
     }
 
