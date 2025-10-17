@@ -8,6 +8,7 @@ import { Logger } from '../../shared/utils/Logger';
 export class AssistantService {
     private databaseManager: DatabaseManager;
     private logger: Logger;
+    private perplexityUrl: string = 'https://www.perplexity.ai';
 
     constructor(databaseManager: DatabaseManager) {
         this.databaseManager = databaseManager;
@@ -49,8 +50,8 @@ export class AssistantService {
                 return this.handleSearch(searchTerm);
             }
 
-            // Default search behavior
-            return this.handleSearch(query);
+            // Default search behavior - use Perplexity for AI queries
+            return this.handlePerplexityQuery(query);
 
         } catch (error) {
             this.logger.error('Error processing query:', error);
@@ -154,5 +155,36 @@ export class AssistantService {
             title: `🔍 Search Results for "${query}"`,
             items: results
         };
+    }
+
+    /**
+     * Handle Perplexity AI query
+     */
+    private handlePerplexityQuery(query: string): AssistantResponse {
+        if (!query.trim()) {
+            return {
+                type: 'info',
+                message: 'Please ask a question or provide a search term.'
+            };
+        }
+
+        // Encode query for URL
+        const encodedQuery = encodeURIComponent(query);
+        const perplexityQueryUrl = `${this.perplexityUrl}?q=${encodedQuery}`;
+
+        this.logger.info(`Routing query to Perplexity: ${query}`);
+
+        return {
+            type: 'navigate',
+            url: perplexityQueryUrl,
+            message: `🤖 Searching on Perplexity for: "${query}"`
+        };
+    }
+
+    /**
+     * Get Perplexity URL for direct access
+     */
+    public getPerplexityUrl(): string {
+        return this.perplexityUrl;
     }
 }

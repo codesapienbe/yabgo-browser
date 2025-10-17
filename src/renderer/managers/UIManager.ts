@@ -350,6 +350,18 @@ export class UIManager extends EventEmitter {
             }
         } else if (response.type === 'error') {
             this.assistantResponse.innerHTML = `<div class="error-message">${response.message}</div>`;
+        } else if (response.type === 'navigate') {
+            // Handle Perplexity navigation responses
+            this.assistantResponse.innerHTML = `
+                <div class="perplexity-info">
+                    <div class="info-message">${response.message}</div>
+                    <div class="loading-text">Opening Perplexity...</div>
+                </div>
+            `;
+            // Auto-hide after a brief moment to let user see the message
+            setTimeout(() => {
+                this.hideAssistantResponse();
+            }, 800);
         }
     }
 

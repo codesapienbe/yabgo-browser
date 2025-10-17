@@ -417,6 +417,30 @@ body {
     color: #f87171;
 }
 
+.perplexity-info {
+    padding: 20px 20px;
+    text-align: center;
+}
+
+.loading-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 12px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
 /* Input Container */
 .input-container {
     position: fixed;

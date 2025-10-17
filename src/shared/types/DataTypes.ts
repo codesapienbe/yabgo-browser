@@ -32,10 +32,11 @@ export interface HistorySearchOptions {
  * Assistant response types
  */
 export interface AssistantResponse {
-    type: 'info' | 'results' | 'error';
+    type: 'info' | 'results' | 'error' | 'navigate';
     message?: string;
     title?: string;
     items?: PageMetadata[];
+    url?: string;
 }
 
 /**

@@ -39,6 +39,15 @@ export class AssistantManager extends EventEmitter {
             this.logger.debug(`Processing assistant query: ${query}`);
 
             const response = await window.yabgo.assistantQuery(query);
+
+            // Handle Perplexity navigation responses
+            if (response.type === 'navigate' && response.url) {
+                this.logger.info(`Navigating to Perplexity: ${response.url}`);
+                this.emit('navigate', response.url);
+                this.emit('response', response);
+                return;
+            }
+
             this.emit('response', response);
 
             this.logger.debug('Assistant query processed successfully');
@@ -70,7 +79,7 @@ export class AssistantManager extends EventEmitter {
         ];
 
         const lowerInput = input.toLowerCase();
-        return suggestions.filter(suggestion => 
+        return suggestions.filter(suggestion =>
             suggestion.toLowerCase().includes(lowerInput)
         );
     }
@@ -80,7 +89,7 @@ export class AssistantManager extends EventEmitter {
      */
     public isAssistantCommand(input: string): boolean {
         const assistantKeywords = [
-            'find', 'search', 'recent', 'clear', 'history', 
+            'find', 'search', 'recent', 'clear', 'history',
             'visited', 'stats', 'statistics', 'show', 'most'
         ];
 
