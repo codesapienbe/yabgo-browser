@@ -7,6 +7,7 @@
     "build": "bash scripts/build-all.sh",
     "dev": "concurrently \"tsc -p tsconfig.main.json --watch\" \"webpack --watch\" \"wait-on dist/main/main.js dist/renderer.bundle.js && electron --no-sandbox .\"",
     "prod": "npm run clean && tsc -p tsconfig.main.json && webpack --mode production && npm run copy:assets && electron --no-sandbox .",
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
     "list": "npm run",
     "test": "jest",
     "clean": "rm -rf dist release",

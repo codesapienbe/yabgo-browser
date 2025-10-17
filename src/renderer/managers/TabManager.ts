@@ -193,12 +193,14 @@ export class TabManager extends EventEmitter {
                     if(!node) return '';
                     const nodeName = node.nodeName.toLowerCase();
                     if(nodeName === '#text'){
-                        return node.textContent.replace(/\s+/g,' ').trim();
+                        const txt = node.textContent || '';
+                        return txt.replace(/\s+/g,' ').trim();
                     }
                     if(['script','style','noscript'].includes(nodeName)) return '';
                     if(nodeName.match(/^h[1-6]$/)){
                         const level = parseInt(nodeName.charAt(1));
-                        return '\n' + '#'.repeat(level) + ' ' + (node.textContent || '') + '\n\n';
+                        const headingText = (node.textContent || '').trim();
+                        return '\n' + '#'.repeat(level) + ' ' + headingText + '\n\n';
                     }
                     if(nodeName === 'p'){
                         return (Array.from(node.childNodes).map(nodeToMarkdown).join('') || '') + '\n\n';
@@ -211,7 +213,7 @@ export class TabManager extends EventEmitter {
                     }
                     if(nodeName === 'a'){
                         const href = node.getAttribute('href') || '';
-                        const text = node.textContent || href;
+                        const text = (node.textContent || href).trim();
                         return '[' + text + '](' + href + ')';
                     }
                     if(nodeName === 'img'){
@@ -499,35 +501,65 @@ export class TabManager extends EventEmitter {
         try {
             return await webview.executeJavaScript(script);
         } catch (err) {
-            // If immediate execution failed (possibly because guest not ready), wait for dom-ready and retry
+            // If immediate execution failed (guest may not be ready), attempt retry + dom-ready listener.
             return await new Promise((resolve, reject) => {
                 let settled = false;
+                let retryTimer: number | null = null;
+                let timeoutTimer: number | null = null;
 
-                const onDomReady = () => {
+                const cleanup = () => {
                     try {
                         webview.removeEventListener('dom-ready', onDomReady);
+                    } catch (_) { }
+                    if (retryTimer !== null) clearTimeout(retryTimer);
+                    if (timeoutTimer !== null) clearTimeout(timeoutTimer);
+                };
+
+                const finalizeSuccess = (res: any) => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    resolve(res);
+                };
+
+                const finalizeError = (e: any) => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    reject(e);
+                };
+
+                const tryExecute = () => {
+                    try {
                         webview.executeJavaScript(script).then(res => {
-                            settled = true;
-                            resolve(res);
-                        }).catch(e => {
-                            settled = true;
-                            reject(e);
+                            finalizeSuccess(res);
+                        }).catch(() => {
+                            // Ignore - will wait for dom-ready or timeout
                         });
                     } catch (e) {
-                        settled = true;
-                        reject(e);
+                        // ignore synchronous failures here
                     }
                 };
 
-                webview.addEventListener('dom-ready', onDomReady);
+                const onDomReady = () => {
+                    try {
+                        tryExecute();
+                    } catch (e) {
+                        finalizeError(e);
+                    }
+                };
 
-                const timer = setTimeout(() => {
+                // Listen for dom-ready and also schedule a short retry in case it's a timing issue
+                webview.addEventListener('dom-ready', onDomReady);
+                // quick retry shortly after failure
+                retryTimer = setTimeout(tryExecute, 100) as unknown as number;
+
+                timeoutTimer = setTimeout(() => {
                     if (!settled) {
-                        webview.removeEventListener('dom-ready', onDomReady);
+                        cleanup();
                         reject(new Error('safeExecuteScript timeout'));
                     }
-                    clearTimeout(timer);
-                }, timeoutMs);
+                }, timeoutMs) as unknown as number;
             });
         }
     }
