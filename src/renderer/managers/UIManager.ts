@@ -525,6 +525,13 @@ export class UIManager extends EventEmitter {
     }
 
     /**
+     * Remove input container from DOM (public wrapper for hideInput)
+     */
+    public removeInput(): void {
+        this.hideInput();
+    }
+
+    /**
      * Cleanup resources
      */
     public cleanup(): void {

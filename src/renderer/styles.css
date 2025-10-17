@@ -465,7 +465,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     pointer-events: auto;
-    opacity: 0.15;
+    opacity: 0.25;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

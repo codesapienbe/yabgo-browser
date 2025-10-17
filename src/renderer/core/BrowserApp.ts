@@ -74,7 +74,12 @@ export class BrowserApp {
                 const site = new URL(tab.url || '').hostname;
                 const prefs = JSON.parse(localStorage.getItem('readerPrefs') || '{}');
                 if (!prefs[site]) {
-                    this.uiManager.restoreInput();
+                    // If tab already contains content, still remove input
+                    if (tab.url && tab.url !== 'about:blank') {
+                        this.uiManager.removeInput();
+                    } else {
+                        this.uiManager.restoreInput();
+                    }
                 }
             } catch (e) {
                 this.uiManager.restoreInput();
