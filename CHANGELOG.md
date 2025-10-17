@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-10-17
+
+### Added
+- 🎁 **Default MCP Servers**: 5 pre-configured MCP servers automatically added on first run
+  - Filesystem Server - File operations (read, write, search)
+  - Memory Server - Persistent note storage
+  - Brave Search Server - Web search capabilities (requires API key)
+  - Git Server - Git repository operations
+  - Time Server - Timezone and time conversion
+- 📚 **Default MCP Servers Documentation**: Comprehensive guide at `docs/DEFAULT_MCP_SERVERS.md`
+
+### Fixed
+- 📖 **Markdown Reader View**: Fixed rendering issue where markdown content was displayed as raw text
+  - Added `marked` library for proper markdown-to-HTML conversion
+  - Reader view now displays formatted content with headers, lists, links, and images
+  - Improved readability with proper HTML rendering
+
+### Technical
+- Added `marked` npm package for markdown parsing
+- Added `@types/marked` for TypeScript support
+- Updated `UIManager.showReader()` to async for markdown parsing
+- New `DefaultMCPServers.ts` utility for server initialization
+- Enhanced `main.ts` with `initializeDefaultMCPServers()` method
+
 ## [1.1.0] - 2025-10-17
 
 ### Added

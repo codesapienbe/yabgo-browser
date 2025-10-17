@@ -5,6 +5,7 @@ import { MCPClientManager } from './managers/MCPClientManager';
 import { MCPContextManager } from './managers/MCPContextManager';
 import { IPCManager } from './managers/IPCManager';
 import { Logger } from '../shared/utils/Logger';
+import { DEFAULT_MCP_SERVERS, createDefaultServerConfig, shouldInitializeDefaults } from '../shared/utils/DefaultMCPServers';
 
 /**
  * Main application class - Entry point for YABGO Browser
@@ -40,11 +41,36 @@ class YabgoApp {
     public async initialize(): Promise<void> {
         try {
             await this.databaseManager.initialize();
+            await this.initializeDefaultMCPServers();
             this.setupEventListeners();
             this.logger.info('YABGO Browser initialized successfully');
         } catch (error) {
             this.logger.error('Failed to initialize application:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Initialize default MCP servers on first run
+     */
+    private async initializeDefaultMCPServers(): Promise<void> {
+        try {
+            const existingServers = this.databaseManager.getMCPServers();
+
+            if (shouldInitializeDefaults(existingServers)) {
+                this.logger.info('Initializing default MCP servers...');
+
+                for (const defaultServer of DEFAULT_MCP_SERVERS) {
+                    const serverConfig = createDefaultServerConfig(defaultServer);
+                    this.databaseManager.saveMCPServer(serverConfig);
+                    this.logger.info(`Added default MCP server: ${serverConfig.name}`);
+                }
+
+                this.logger.info('Default MCP servers initialized successfully');
+            }
+        } catch (error) {
+            this.logger.error('Failed to initialize default MCP servers:', error);
+            // Don't throw - this is not critical for app startup
         }
     }
 

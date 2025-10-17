@@ -237,7 +237,18 @@ A: Absolutely! YABGO is open-source. See the [Development Guide](#-development-g
 
 ## 📝 What's New
 
-### Version 1.0.9 (Latest)
+### Version 1.1.1 (Latest)
+- 🎁 **Default MCP Servers** - 5 pre-configured servers ready to use:
+  - **Filesystem** - Read, write, and manage files
+  - **Memory** - Persistent note storage across sessions
+  - **Brave Search** - Web search capabilities
+  - **Git** - Repository operations
+  - **Time** - Timezone conversions
+- 📖 **Fixed Markdown Reader** - Reader view now properly renders formatted content
+- ⚡ Zero configuration - Default servers work out of the box
+- 📚 Comprehensive documentation for all default servers
+
+### Version 1.1.0
 - ✨ Gesture-driven navigation system
 - 🤖 AI-powered browsing assistant
 - 🔧 **MCP (Model Context Protocol) Integration**
@@ -250,7 +261,7 @@ A: Absolutely! YABGO is open-source. See the [Development Guide](#-development-g
 - 🔒 Enterprise-grade security
 - 🖥️ Cross-platform support
 
-[See Full Changelog](CHANGELOG.md) | [MCP Integration Guide](docs/MCP_INTEGRATION.md)
+[See Full Changelog](CHANGELOG.md) | [MCP Integration Guide](docs/MCP_INTEGRATION.md) | [Default MCP Servers](docs/DEFAULT_MCP_SERVERS.md)
 
 ---
 

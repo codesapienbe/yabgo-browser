@@ -1,6 +1,7 @@
 import { EventEmitter } from '../utils/EventEmitter';
 import { Logger } from '../../shared/utils/Logger';
 import { URLHelper } from '../../shared/utils/URLHelper';
+import { marked } from 'marked';
 
 /**
  * Manages UI interactions and state
@@ -494,11 +495,14 @@ export class UIManager extends EventEmitter {
     /**
      * Show reader overlay with markdown content
      */
-    public showReader(markdown: string): void {
+    public async showReader(markdown: string): Promise<void> {
         let overlay = document.getElementById('readerOverlay') as HTMLElement | null;
         if (!overlay) return;
 
-        overlay.innerHTML = `<div class="reader-close" id="readerClose">×</div><div class="reader-content">${markdown}</div>`;
+        // Parse markdown to HTML
+        const htmlContent = await marked.parse(markdown);
+
+        overlay.innerHTML = `<div class="reader-close" id="readerClose">×</div><div class="reader-content">${htmlContent}</div>`;
         overlay.classList.add('show');
 
         const closeBtn = document.getElementById('readerClose');

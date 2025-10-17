@@ -1,6 +1,6 @@
 {
   "name": "yabgo-browser",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant and MCP integration",
   "main": "dist/main/main.js",
   "scripts": {
@@ -41,6 +41,7 @@
     "@types/electron": "^1.6.10",
     "@types/jest": "^29.5.8",
     "@types/jsdom": "^27.0.0",
+    "@types/marked": "^5.0.2",
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
@@ -59,8 +60,9 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.1",
     "better-sqlite3": "^9.2.2",
-    "@modelcontextprotocol/sdk": "^1.20.1"
+    "marked": "^16.4.1"
   },
   "build": {
     "appId": "com.yabgo.browser",
