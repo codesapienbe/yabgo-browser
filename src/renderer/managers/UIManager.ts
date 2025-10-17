@@ -235,6 +235,11 @@ export class UIManager extends EventEmitter {
      * Handle scroll direction changes
      */
     private handleScroll(direction: string): void {
+        // Don't handle scroll if in search mode (let Perplexity handle its own UI)
+        if (this.isSearchMode) {
+            return;
+        }
+
         if (this.scrollTimeout) {
             clearTimeout(this.scrollTimeout);
         }
@@ -247,7 +252,7 @@ export class UIManager extends EventEmitter {
             }
         } else if (direction === 'up') {
             this.scrollTimeout = window.setTimeout(() => {
-                if (this.isScrolling) {
+                if (this.isScrolling && !this.isSearchMode) {
                     // Check if input has content - if so, center it, otherwise bottom
                     if (this.unifiedInput && this.unifiedInput.value.trim()) {
                         this.centerInput();
@@ -419,11 +424,19 @@ export class UIManager extends EventEmitter {
         if (enabled) {
             // Hide URL input in search mode
             this.hideInput();
-            this.logger.debug('Entered search mode - URL field hidden');
+            // Clear input and set it to read-only to prevent accidental typing
+            if (this.unifiedInput) {
+                this.unifiedInput.value = '';
+                this.unifiedInput.readOnly = true;
+            }
+            this.logger.debug('Entered search mode - URL field hidden and cleared');
         } else {
             // Show URL input when exiting search mode
             this.showInput();
             this.bottomInput();
+            if (this.unifiedInput) {
+                this.unifiedInput.readOnly = false;
+            }
             this.logger.debug('Exited search mode - URL field visible');
         }
     }

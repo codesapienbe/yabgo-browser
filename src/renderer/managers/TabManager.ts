@@ -375,9 +375,10 @@ export class TabManager extends EventEmitter {
             if (webview.src && !webview.src.startsWith('about:')) {
                 this.setupScrollDetection(webview);
             }
-            // Auto-accept cookies for Perplexity
+            // Auto-accept cookies and remove sign-in for Perplexity
             if (webview.src && webview.src.includes('perplexity.ai')) {
                 this.autoAcceptPerplexityCookies(webview);
+                this.removePerplexitySignInPrompt(webview);
             }
         });
     }
@@ -463,6 +464,63 @@ export class TabManager extends EventEmitter {
             })();
         `).catch(_err => {
             this.logger.debug('Cookie auto-accept setup completed for Perplexity');
+        });
+    }
+
+    /**
+     * Remove sign-in prompt from Perplexity
+     */
+    private removePerplexitySignInPrompt(webview: Electron.WebviewTag): void {
+        webview.executeJavaScript(`
+            (function removeSignInPrompt() {
+                // Common selectors for sign-in/auth prompts on Perplexity
+                const signInSelectors = [
+                    'div[class*="signin"]',
+                    'div[class*="sign-in"]',
+                    'div[class*="auth"]',
+                    'div[class*="login"]',
+                    'button:contains("Sign in")',
+                    'button:contains("Create account")',
+                    'button:contains("Sign up")',
+                    '[role="dialog"]',
+                    '.modal',
+                    '.modal-backdrop',
+                    'div[class*="modal"]'
+                ];
+
+                // Attempt to find and remove sign-in containers
+                const elementsToCheck = document.querySelectorAll('[class*="sign"], [class*="auth"], [class*="login"]');
+                
+                elementsToCheck.forEach(el => {
+                    const text = el.textContent?.toLowerCase() || '';
+                    if (text.includes('sign in') || 
+                        text.includes('create an account') || 
+                        text.includes('sign up') ||
+                        text.includes('log in')) {
+                        // Check if it's likely a sign-in overlay/modal
+                        const style = window.getComputedStyle(el);
+                        if (style.position === 'fixed' || style.position === 'absolute' || el.classList.contains('modal')) {
+                            el.style.display = 'none';
+                            console.log('Removed sign-in prompt element');
+                        }
+                    }
+                });
+
+                // Remove any overlays/backdrops
+                const overlays = document.querySelectorAll('div[style*="fixed"], div[style*="absolute"]');
+                overlays.forEach(overlay => {
+                    const bgColor = window.getComputedStyle(overlay).backgroundColor;
+                    // If it's a semi-transparent overlay (likely a backdrop)
+                    if (bgColor.includes('rgba') || bgColor.includes('rgb')) {
+                        const parent = overlay.parentElement;
+                        if (parent?.textContent?.toLowerCase().includes('sign')) {
+                            overlay.style.display = 'none';
+                        }
+                    }
+                });
+            })();
+        `).catch(_err => {
+            this.logger.debug('Sign-in prompt removal completed for Perplexity');
         });
     }
 
