@@ -177,8 +177,15 @@ export class TabManager extends EventEmitter {
         const webview = document.getElementById(`webview-${id}`) as Electron.WebviewTag | null;
         if (!webview) return;
 
+        // Skip reader for blank/internal pages or data URIs
+        const urlForCheck = (activeTab.url || (webview.getAttribute && webview.getAttribute('src')) || webview.src || '').toString();
+        if (!urlForCheck || urlForCheck === 'about:blank' || urlForCheck.startsWith('data:')) {
+            this.logger.debug(`Skipping reader mode: page appears blank or internal (url=${urlForCheck})`);
+            return;
+        }
+
         try {
-            await webview.executeJavaScript(`(function() {
+            await this.safeExecuteScript(webview, `(function() {
                 function escapeHtml(s){return s}
 
                 function nodeToMarkdown(node){
@@ -481,10 +488,50 @@ export class TabManager extends EventEmitter {
     }
 
     /**
+     * Safely execute a script inside a webview, retrying after dom-ready if needed.
+     */
+    private async safeExecuteScript(webview: Electron.WebviewTag, script: string, timeoutMs: number = 5000): Promise<any> {
+        try {
+            return await webview.executeJavaScript(script);
+        } catch (err) {
+            // If immediate execution failed (possibly because guest not ready), wait for dom-ready and retry
+            return await new Promise((resolve, reject) => {
+                let settled = false;
+
+                const onDomReady = () => {
+                    try {
+                        webview.removeEventListener('dom-ready', onDomReady);
+                        webview.executeJavaScript(script).then(res => {
+                            settled = true;
+                            resolve(res);
+                        }).catch(e => {
+                            settled = true;
+                            reject(e);
+                        });
+                    } catch (e) {
+                        settled = true;
+                        reject(e);
+                    }
+                };
+
+                webview.addEventListener('dom-ready', onDomReady);
+
+                const timer = setTimeout(() => {
+                    if (!settled) {
+                        webview.removeEventListener('dom-ready', onDomReady);
+                        reject(new Error('safeExecuteScript timeout'));
+                    }
+                    clearTimeout(timer);
+                }, timeoutMs);
+            });
+        }
+    }
+
+    /**
      * Setup scroll detection for a webview
      */
     private setupScrollDetection(webview: Electron.WebviewTag): void {
-        webview.executeJavaScript(`
+        this.safeExecuteScript(webview, `
             let lastScrollY = 0;
             let ticking = false;
 
@@ -518,7 +565,7 @@ export class TabManager extends EventEmitter {
      * Auto-accept cookies on Perplexity
      */
     private autoAcceptPerplexityCookies(webview: Electron.WebviewTag): void {
-        webview.executeJavaScript(`
+        this.safeExecuteScript(webview, `
             (function autoAcceptCookies() {
                 // Common cookie accept button selectors used by various sites
                 const selectors = [
@@ -568,7 +615,7 @@ export class TabManager extends EventEmitter {
      * Remove sign-in prompt from Perplexity
      */
     private removePerplexitySignInPrompt(webview: Electron.WebviewTag): void {
-        webview.executeJavaScript(`
+        this.safeExecuteScript(webview, `
             (function removeSignInPrompt() {
                 const targetKeywords = ['sign in', 'create an account', 'sign up', 'create account', 'log in', 'Sign in or create an account', 'Single sign-on (SSO)'];
                 let monitoringActive = false;
@@ -639,7 +686,7 @@ export class TabManager extends EventEmitter {
      * Update navigation state for a tab
      */
     private updateNavigationState(webview: Electron.WebviewTag, tabId: string): void {
-        webview.executeJavaScript(`
+        this.safeExecuteScript(webview, `
             Promise.all([
                 new Promise(resolve => {
                     if (window.history && window.history.length) {
@@ -730,7 +777,7 @@ export class TabManager extends EventEmitter {
         if (activeTab) {
             const webview = document.getElementById(`webview-${activeTab.id}`) as Electron.WebviewTag;
             if (webview) {
-                webview.executeJavaScript('window.scrollTo(0, 0)');
+                this.safeExecuteScript(webview, 'window.scrollTo(0, 0)').catch(() => { });
             }
         }
     }
