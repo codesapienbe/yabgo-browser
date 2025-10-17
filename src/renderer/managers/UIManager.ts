@@ -17,6 +17,7 @@ export class UIManager extends EventEmitter {
     private isSearchMode: boolean = false;
     private scrollTimeout: number | null = null;
     private logger: Logger;
+    private inputContainerCopy: HTMLElement | null = null; // Added for hiding/showing
 
     constructor() {
         super();
@@ -270,10 +271,56 @@ export class UIManager extends EventEmitter {
     }
 
     /**
-     * Hide input container
+     * Hide input container (remove from DOM)
      */
     private hideInput(): void {
-        this.inputContainer?.classList.add('hidden');
+        if (this.inputContainer) {
+            // Store the container in case we need to restore it
+            if (!this.inputContainerCopy) {
+                this.inputContainerCopy = this.inputContainer.cloneNode(true) as HTMLElement;
+            }
+            // Remove from DOM completely
+            this.inputContainer.remove();
+        }
+    }
+
+    /**
+     * Show input container (restore to DOM)
+     */
+    private showInput(): void {
+        if (this.inputContainer && this.inputContainer.parentElement) {
+            // Already in DOM
+            this.inputContainer.style.display = '';
+            this.inputContainer.style.visibility = '';
+            return;
+        }
+
+        // Need to restore from copy
+        if (this.inputContainerCopy) {
+            const parent = document.querySelector('.glass-overlay');
+            if (parent) {
+                this.inputContainer = this.inputContainerCopy.cloneNode(true) as HTMLElement;
+                parent.appendChild(this.inputContainer);
+
+                // Re-bind event listeners after DOM restoration
+                this.setupInputListeners();
+            }
+        }
+    }
+
+    /**
+     * Setup input event listeners
+     */
+    private setupInputListeners(): void {
+        // Re-find elements after DOM restoration
+        this.unifiedInput = this.inputContainer?.querySelector('input') as HTMLInputElement || null;
+        this.inputBtn = this.inputContainer?.querySelector('button') as HTMLButtonElement || null;
+
+        // Re-bind listeners
+        this.unifiedInput?.addEventListener('keypress', this.handleInputKeypress.bind(this));
+        this.unifiedInput?.addEventListener('focus', this.handleInputFocus.bind(this));
+        this.unifiedInput?.addEventListener('blur', this.handleInputBlur.bind(this));
+        this.inputBtn?.addEventListener('click', this.handleInputSubmit.bind(this));
     }
 
     /**
@@ -294,13 +341,6 @@ export class UIManager extends EventEmitter {
             this.inputContainer.classList.remove('centered', 'hidden');
             this.inputContainer.classList.add('bottom');
         }
-    }
-
-    /**
-     * Show input container
-     */
-    private showInput(): void {
-        this.inputContainer?.classList.remove('hidden');
     }
 
     /**

@@ -473,54 +473,68 @@ export class TabManager extends EventEmitter {
     private removePerplexitySignInPrompt(webview: Electron.WebviewTag): void {
         webview.executeJavaScript(`
             (function removeSignInPrompt() {
-                // Common selectors for sign-in/auth prompts on Perplexity
-                const signInSelectors = [
-                    'div[class*="signin"]',
-                    'div[class*="sign-in"]',
-                    'div[class*="auth"]',
-                    'div[class*="login"]',
-                    'button:contains("Sign in")',
-                    'button:contains("Create account")',
-                    'button:contains("Sign up")',
-                    '[role="dialog"]',
-                    '.modal',
-                    '.modal-backdrop',
-                    'div[class*="modal"]'
-                ];
+                const targetKeywords = ['sign in', 'create an account', 'sign up', 'create account', 'log in'];
+                let monitoringActive = false;
 
-                // Attempt to find and remove sign-in containers
-                const elementsToCheck = document.querySelectorAll('[class*="sign"], [class*="auth"], [class*="login"]');
-                
-                elementsToCheck.forEach(el => {
-                    const text = el.textContent?.toLowerCase() || '';
-                    if (text.includes('sign in') || 
-                        text.includes('create an account') || 
-                        text.includes('sign up') ||
-                        text.includes('log in')) {
-                        // Check if it's likely a sign-in overlay/modal
-                        const style = window.getComputedStyle(el);
-                        if (style.position === 'fixed' || style.position === 'absolute' || el.classList.contains('modal')) {
-                            el.style.display = 'none';
-                            console.log('Removed sign-in prompt element');
-                        }
-                    }
-                });
+                const removeSignInElements = () => {
+                    const allElements = document.querySelectorAll('*');
+                    let removed = 0;
 
-                // Remove any overlays/backdrops
-                const overlays = document.querySelectorAll('div[style*="fixed"], div[style*="absolute"]');
-                overlays.forEach(overlay => {
-                    const bgColor = window.getComputedStyle(overlay).backgroundColor;
-                    // If it's a semi-transparent overlay (likely a backdrop)
-                    if (bgColor.includes('rgba') || bgColor.includes('rgb')) {
-                        const parent = overlay.parentElement;
-                        if (parent?.textContent?.toLowerCase().includes('sign')) {
-                            overlay.style.display = 'none';
+                    allElements.forEach(el => {
+                        const text = el.textContent?.toLowerCase() || '';
+                        const isSignIn = targetKeywords.some(keyword => text.includes(keyword));
+                        
+                        if (isSignIn && (el.offsetParent !== null || el.offsetHeight > 0)) {
+                            // Check if it's a clickable element (button, link, etc.)
+                            if (el.tagName === 'BUTTON' || 
+                                el.tagName === 'A' || 
+                                el.role === 'button' ||
+                                el.classList.toString().includes('button') ||
+                                el.classList.toString().includes('btn')) {
+                                try {
+                                    // Remove the element completely from DOM
+                                    el.remove();
+                                    removed++;
+                                    console.log('Removed sign-in element:', el.textContent?.substring(0, 50));
+                                } catch (e) {
+                                    console.log('Could not remove element');
+                                }
+                            }
                         }
-                    }
-                });
+                    });
+
+                    return removed;
+                };
+
+                // Start monitoring after 3 seconds
+                setTimeout(() => {
+                    monitoringActive = true;
+                    console.log('Starting sign-in prompt monitoring...');
+                    
+                    // Initial removal
+                    removeSignInElements();
+                    
+                    // Continue monitoring for 30 seconds, checking every 500ms
+                    let monitorCount = 0;
+                    const monitorInterval = setInterval(() => {
+                        const removed = removeSignInElements();
+                        monitorCount++;
+                        
+                        if (removed > 0) {
+                            console.log('Found and removed', removed, 'more sign-in elements');
+                        }
+                        
+                        // Stop after 30 seconds (60 * 500ms = 30s)
+                        if (monitorCount >= 60) {
+                            clearInterval(monitorInterval);
+                            console.log('Sign-in monitoring completed');
+                            monitoringActive = false;
+                        }
+                    }, 500);
+                }, 3000);
             })();
         `).catch(_err => {
-            this.logger.debug('Sign-in prompt removal completed for Perplexity');
+            this.logger.debug('Sign-in prompt removal setup completed for Perplexity');
         });
     }
 
