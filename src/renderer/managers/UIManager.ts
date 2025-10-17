@@ -42,7 +42,7 @@ export class UIManager extends EventEmitter {
         this.floatingButton = document.getElementById('floatingButton') as HTMLElement;
         this.assistantResponse = document.getElementById('assistantResponse') as HTMLElement;
 
-        if (!this.unifiedInput || !this.inputBtn || !this.inputContainer || 
+        if (!this.unifiedInput || !this.inputBtn || !this.inputContainer ||
             !this.floatingButton || !this.assistantResponse) {
             throw new Error('Required UI elements not found');
         }
@@ -56,6 +56,7 @@ export class UIManager extends EventEmitter {
             // Use a small delay to ensure the DOM is fully ready
             setTimeout(() => {
                 this.unifiedInput?.focus();
+                this.centerInput();
                 this.logger.debug('Search field auto-focused');
             }, 100);
         }
@@ -67,6 +68,8 @@ export class UIManager extends EventEmitter {
     private setupEventListeners(): void {
         // Input handling
         this.unifiedInput?.addEventListener('keypress', this.handleInputKeypress.bind(this));
+        this.unifiedInput?.addEventListener('focus', this.handleInputFocus.bind(this));
+        this.unifiedInput?.addEventListener('blur', this.handleInputBlur.bind(this));
         this.inputBtn?.addEventListener('click', this.handleInputSubmit.bind(this));
         this.floatingButton?.addEventListener('click', this.showInput.bind(this));
 
@@ -133,6 +136,28 @@ export class UIManager extends EventEmitter {
     }
 
     /**
+     * Handle input focus events
+     */
+    private handleInputFocus(): void {
+        this.centerInput();
+        this.showInput();
+        this.hideFloatingButton();
+    }
+
+    /**
+     * Handle input blur events
+     */
+    private handleInputBlur(): void {
+        // Only move to bottom if input is empty and not submitting
+        if (this.unifiedInput && !this.unifiedInput.value.trim()) {
+            setTimeout(() => {
+                this.bottomInput();
+                this.showFloatingButton();
+            }, 150); // Small delay to allow for focus transitions
+        }
+    }
+
+    /**
      * Handle input keypress events
      */
     private handleInputKeypress(event: KeyboardEvent): void {
@@ -140,6 +165,9 @@ export class UIManager extends EventEmitter {
             this.handleInputSubmit();
         } else if (event.key === 'Escape') {
             this.hideAssistantResponse();
+            if (this.unifiedInput && !this.unifiedInput.value.trim()) {
+                this.unifiedInput.blur();
+            }
         }
     }
 
@@ -195,7 +223,12 @@ export class UIManager extends EventEmitter {
         } else if (direction === 'up') {
             this.scrollTimeout = window.setTimeout(() => {
                 if (this.isScrolling) {
-                    this.showInput();
+                    // Check if input has content - if so, center it, otherwise bottom
+                    if (this.unifiedInput && this.unifiedInput.value.trim()) {
+                        this.centerInput();
+                    } else {
+                        this.bottomInput();
+                    }
                     this.hideFloatingButton();
                     this.isScrolling = false;
                 }
@@ -208,6 +241,26 @@ export class UIManager extends EventEmitter {
      */
     private hideInput(): void {
         this.inputContainer?.classList.add('hidden');
+    }
+
+    /**
+     * Center the input container
+     */
+    private centerInput(): void {
+        if (this.inputContainer) {
+            this.inputContainer.classList.remove('bottom', 'hidden');
+            this.inputContainer.classList.add('centered');
+        }
+    }
+
+    /**
+     * Position the input container at the bottom
+     */
+    private bottomInput(): void {
+        if (this.inputContainer) {
+            this.inputContainer.classList.remove('centered', 'hidden');
+            this.inputContainer.classList.add('bottom');
+        }
     }
 
     /**

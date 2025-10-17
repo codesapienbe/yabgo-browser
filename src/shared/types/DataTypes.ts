@@ -71,3 +71,26 @@ export interface GestureConfig {
         bottomEdge: boolean;
     };
 }
+
+/**
+ * Browser tab interface
+ */
+export interface Tab {
+    id: string;
+    title: string;
+    url: string;
+    isActive: boolean;
+    canGoBack: boolean;
+    canGoForward: boolean;
+    isLoading: boolean;
+    favicon?: string;
+}
+
+/**
+ * Tab creation options
+ */
+export interface TabCreationOptions {
+    url?: string;
+    title?: string;
+    activate?: boolean;
+}

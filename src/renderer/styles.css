@@ -1,4 +1,3 @@
-
 /* YABGO Browser - Glassmorphic Design */
 
 /* Reset */
@@ -9,7 +8,8 @@
 }
 
 /* Base */
-html, body {
+html,
+body {
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -100,6 +100,134 @@ html, body {
     color: white;
 }
 
+/* Tab Bar */
+.tab-bar {
+    flex: 0 0 auto;
+    height: 40px;
+    background: rgba(15, 15, 20, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.tab-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-right: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    min-width: 150px;
+    max-width: 200px;
+}
+
+.tab-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-item.active {
+    background: rgba(96, 165, 250, 0.2);
+    border-color: rgba(96, 165, 250, 0.3);
+    color: #60a5fa;
+}
+
+.tab-favicon {
+    width: 16px;
+    height: 16px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.tab-title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tab-loading {
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-top: 1px solid #60a5fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.tab-loading.show {
+    opacity: 1;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.tab-close {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.tab-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.new-tab-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    font-weight: 300;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-left: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
 /* Browser Content - Flex Grow */
 .browser-content {
     flex: 1;
@@ -107,10 +235,27 @@ html, body {
     background: #ffffff;
 }
 
-/* Webview - Fill Parent */
-webview {
+.webview-container {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+/* Tab Webviews */
+.tab-webview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.tab-webview.active {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* Gesture Zones */
@@ -121,21 +266,24 @@ webview {
 }
 
 .left-zone {
-    top: 32px;
+    top: 72px;
+    /* 32px title bar + 40px tab bar */
     left: 0;
     width: 60px;
-    height: calc(100% - 32px);
+    height: calc(100% - 72px);
 }
 
 .right-zone {
-    top: 32px;
+    top: 72px;
+    /* 32px title bar + 40px tab bar */
     right: 0;
     width: 60px;
-    height: calc(100% - 32px);
+    height: calc(100% - 72px);
 }
 
 .top-zone {
-    top: 32px;
+    top: 72px;
+    /* 32px title bar + 40px tab bar */
     left: 50%;
     transform: translateX(-50%);
     width: 150px;
@@ -163,20 +311,15 @@ webview {
     bottom: 0;
 }
 
-.glass-overlay > * {
+.glass-overlay>* {
     pointer-events: auto;
 }
 
 /* Assistant Response */
 .assistant-response {
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 700px;
+    width: 100%;
     max-height: 400px;
-    margin-bottom: 20px;
     background: rgba(20, 20, 30, 0.95);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
@@ -185,6 +328,17 @@ webview {
     overflow-y: auto;
     display: none;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+}
+
+.input-container.centered~.assistant-response {
+    top: calc(100% + 20px);
+    left: 0;
+}
+
+.input-container.bottom~.assistant-response {
+    bottom: calc(100% + 20px);
+    top: auto;
 }
 
 .assistant-response.show {
@@ -197,6 +351,7 @@ webview {
         opacity: 0;
         transform: translateX(-50%) translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
@@ -261,16 +416,32 @@ webview {
 
 /* Input Container */
 .input-container {
-    position: relative;
+    position: fixed;
     width: 90%;
     max-width: 700px;
-    margin: 0 auto 20px;
-    transition: all 0.3s ease;
+    margin: 0 auto;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.input-container.centered {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+}
+
+.input-container.bottom {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: auto;
 }
 
 .input-container.hidden {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translate(-50%, -50%) scale(0.95);
     pointer-events: none;
 }
 
@@ -354,6 +525,7 @@ webview {
         opacity: 0;
         transform: translateX(-50%) scale(0.8);
     }
+
     to {
         opacity: 1;
         transform: translateX(-50%) scale(1);
@@ -372,7 +544,8 @@ webview {
 /* Loading Indicator */
 .loading-indicator {
     position: fixed;
-    top: 32px;
+    top: 72px;
+    /* 32px title bar + 40px tab bar */
     left: 0;
     right: 0;
     height: 2px;
@@ -395,6 +568,7 @@ webview {
     0% {
         transform: translateX(-100%);
     }
+
     100% {
         transform: translateX(100%);
     }
@@ -420,12 +594,14 @@ webview {
 
 /* Responsive */
 @media (max-width: 768px) {
+
     .input-container,
     .assistant-response {
         width: 95%;
     }
 
     .unified-input {
-        font-size: 16px; /* Prevent iOS zoom */
+        font-size: 16px;
+        /* Prevent iOS zoom */
     }
 }
