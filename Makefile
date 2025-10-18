@@ -36,5 +36,5 @@ clean:
 	npm run clean
 
 release:
-	@./scripts/release.sh
+	@./scripts/release.sh || true
 	npm run build:snap
