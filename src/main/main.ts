@@ -99,6 +99,21 @@ class YabgoApp {
         app.on('before-quit', () => {
             this.cleanup();
         });
+
+        // Ensure supervised child processes are cleaned up on process exit
+        process.on('exit', () => {
+            this.cleanup();
+        });
+
+        // Also try to kill supervised child processes on SIGINT/SIGTERM
+        process.on('SIGINT', () => {
+            this.cleanup();
+            process.exit(0);
+        });
+        process.on('SIGTERM', () => {
+            this.cleanup();
+            process.exit(0);
+        });
     }
 
     /**

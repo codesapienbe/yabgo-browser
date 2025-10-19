@@ -131,6 +131,11 @@ export class MCPSettingsManager extends EventEmitter {
                     <div class="mcp-server-status" id="status-${server.id}">
                         ${server.enabled ? 'Enabled' : 'Disabled'}
                     </div>
+                    <div class="mcp-server-supervise">
+                        Supervise: <input type="checkbox" data-action="toggle-supervise" data-server-id="${server.id}" ${server.supervise ? 'checked' : ''} />
+                        <div class="mcp-server-supervise-status" id="supervise-status-${server.id}">PID: - | Attempts: 0</div>
+                        <div class="mcp-server-last-stderr" id="stderr-${server.id}"></div>
+                    </div>
                 </div>
                 <div class="mcp-server-actions">
                     <button class="btn-icon" data-action="discover" data-server-id="${server.id}">
@@ -143,7 +148,7 @@ export class MCPSettingsManager extends EventEmitter {
             </div>
         `).join('');
 
-        // Add event listeners to action buttons
+        // Add event listeners to action buttons and supervise toggles
         this.serverList.querySelectorAll('.btn-icon').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const target = e.currentTarget as HTMLElement;
@@ -156,6 +161,35 @@ export class MCPSettingsManager extends EventEmitter {
                     this.deleteServer(serverId);
                 }
             });
+        });
+
+        // Supervise toggle
+        this.serverList.querySelectorAll('input[data-action="toggle-supervise"]').forEach(cb => {
+            cb.addEventListener('change', async (e) => {
+                const input = e.currentTarget as HTMLInputElement;
+                const serverId = input.dataset.serverId;
+                if (!serverId) return;
+
+                const server = this.servers.find(s => s.id === serverId);
+                if (!server) return;
+
+                // Toggle supervise flag and persist via setServerEnabled (keep enabled state)
+                server.supervise = input.checked;
+                const response = await mcpBridge.setServerEnabled(server, server.enabled);
+                if (!response || !response.success) {
+                    this.showError('Failed to update supervise setting');
+                    input.checked = !input.checked; // revert
+                    return;
+                }
+
+                // Refresh status display
+                this.updateSuperviseStatus(serverId);
+            });
+        });
+
+        // Initial status fetch for supervised servers
+        this.servers.forEach(s => {
+            if (s.supervise) this.updateSuperviseStatus(s.id);
         });
     }
 
@@ -265,6 +299,26 @@ export class MCPSettingsManager extends EventEmitter {
             if (status === 'connected') {
                 statusEl.classList.add('connected');
             }
+        }
+        // Also refresh supervise status if relevant
+        this.updateSuperviseStatus(serverId);
+    }
+
+    private async updateSuperviseStatus(serverId: string): Promise<void> {
+        try {
+            const resp = await mcpBridge.getServerStatus(serverId);
+            if (!resp || !resp.success) return;
+            const status = resp.status;
+            const el = document.getElementById(`supervise-status-${serverId}`);
+            if (el) {
+                el.textContent = `PID: ${status.pid ?? '-'} | Attempts: ${status.attempts ?? 0}`;
+            }
+            const stderrEl = document.getElementById(`stderr-${serverId}`);
+            if (stderrEl) {
+                stderrEl.textContent = status.lastStderr ? `Last stderr: ${status.lastStderr}` : '';
+            }
+        } catch (err) {
+            // ignore
         }
     }
 

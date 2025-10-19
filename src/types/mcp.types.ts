@@ -8,6 +8,10 @@ export interface MCPServerConfig {
     args: string[];
     env?: Record<string, string>;
     enabled: boolean;
+    // If true, the app will supervise (spawn and auto-restart) the server process
+    supervise?: boolean;
+    // Optional working directory for the server process
+    cwd?: string;
     permissions: MCPPermissions;
     createdAt: number;
     lastUsed?: number;

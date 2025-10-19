@@ -36,6 +36,10 @@ export interface YabgoAPI {
         updateContext: (data: { url: string; title: string; selection?: string }) => Promise<{ success: boolean; context?: any; error?: string }>;
         getContext: () => Promise<{ success: boolean; context?: any; error?: string }>;
         getContextHistory: (limit?: number) => Promise<{ success: boolean; history?: any[]; error?: string }>;
+        // Enable/disable server
+        setServerEnabled: (config: MCPServerConfig, enabled: boolean) => Promise<{ success: boolean; error?: string }>;
+        // Get supervised server status
+        getServerStatus: (serverId: string) => Promise<{ success: boolean; status?: { pid: number | null; attempts: number; lastStderr?: string }; error?: string }>;
         onServerConnected: (callback: (serverId: string) => void) => () => void;
         onToolsDiscovered: (callback: (data: any) => void) => () => void;
         onError: (callback: (data: any) => void) => () => void;
@@ -100,6 +104,9 @@ const yabgoAPI: YabgoAPI = {
         deleteServer: (serverId: string) =>
             ipcRenderer.invoke('mcp:delete-server', serverId),
 
+        getServerStatus: (serverId: string) =>
+            ipcRenderer.invoke('mcp:get-server-status', serverId),
+
         updateContext: (data: { url: string; title: string; selection?: string }) =>
             ipcRenderer.invoke('mcp:update-context', data),
 
@@ -108,6 +115,10 @@ const yabgoAPI: YabgoAPI = {
 
         getContextHistory: (limit?: number) =>
             ipcRenderer.invoke('mcp:get-context-history', limit),
+
+        // Enable/disable server
+        setServerEnabled: (config: MCPServerConfig, enabled: boolean) =>
+            ipcRenderer.invoke('mcp:set-server-enabled', config, enabled),
 
         onServerConnected: (callback: (serverId: string) => void) => {
             const handler = (_event: IpcRendererEvent, serverId: string) => callback(serverId);

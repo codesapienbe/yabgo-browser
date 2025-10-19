@@ -210,6 +210,19 @@ export class IPCManager {
             }
         });
 
+        // Get supervised server status (pid, restart attempts, last stderr)
+        ipcMain.handle('mcp:get-server-status', async (_event, serverId: string) => {
+            try {
+                const pid = this.mcpClientManager['supervisedChildProcesses'].get(serverId)?.pid || null;
+                const attempts = this.mcpClientManager['reconnectAttempts'].get(serverId) || 0;
+                const lastStderr = this.mcpClientManager['lastStderr'].get(serverId) || null;
+                return { success: true, status: { pid, attempts, lastStderr } };
+            } catch (error) {
+                this.logger.error('[IPC] MCP get-server-status error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
         // Delete server
         ipcMain.handle('mcp:delete-server', async (_event, serverId: string) => {
             try {
@@ -218,6 +231,20 @@ export class IPCManager {
                 return { success: true };
             } catch (error) {
                 this.logger.error('[IPC] MCP delete server error:', error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+        });
+
+        // Enable/disable server
+        ipcMain.handle('mcp:set-server-enabled', async (_event, config: MCPServerConfig, enabled: boolean) => {
+            try {
+                const success = await this.mcpClientManager.setServerEnabled(config, enabled);
+                if (success && enabled) {
+                    this.databaseManager.saveMCPServer(config);
+                }
+                return { success };
+            } catch (error) {
+                this.logger.error('[IPC] MCP set-server-enabled error:', error);
                 return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
             }
         });
