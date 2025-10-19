@@ -1,3 +1,8 @@
+// Mock electron app.getPath early to allow headless tests to construct DatabaseManager
+jest.mock('electron', () => ({
+    app: { getPath: () => '/tmp' }
+}));
+
 import { MCPClientManager } from '../../src/main/managers/MCPClientManager';
 import { MCPContextManager } from '../../src/main/managers/MCPContextManager';
 import { DatabaseManager } from '../../src/main/managers/DatabaseManager';
@@ -9,13 +14,15 @@ describe('MCP Integration Workflow', () => {
     let dbManager: DatabaseManager;
 
     beforeAll(async () => {
+        // Mock electron app.getPath for headless test environment
+        jest.mock('electron', () => ({
+            app: { getPath: () => '/tmp' }
+        }));
+
         // Initialize managers
         clientManager = new MCPClientManager();
         contextManager = new MCPContextManager();
         dbManager = new DatabaseManager();
-
-        // Note: Database initialization requires electron app context
-        // In real tests, this would be mocked or run in electron test environment
     });
 
     afterAll(async () => {

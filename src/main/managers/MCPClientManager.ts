@@ -25,7 +25,7 @@ export class MCPClientManager extends EventEmitter {
      */
     async connectToServer(config: MCPServerConfig): Promise<boolean> {
         try {
-            console.log(`[MCP] Connecting to server: ${config.name}`);
+            console.log(`[MCP] Connecting to server: ${config.name}`, { config });
 
             // Create stdio transport
             const transport = new StdioClientTransport({
@@ -51,12 +51,15 @@ export class MCPClientManager extends EventEmitter {
             this.configs.set(config.id, config);
 
             this.emit('server-connected', config.id);
-            console.log(`[MCP] Successfully connected to: ${config.name}`);
+            console.log(`[MCP] Successfully connected to: ${config.name}`, { serverId: config.id });
 
             return true;
         } catch (error) {
             console.error(`[MCP] Failed to connect to ${config.name}:`, error);
-            this.emit('error', { serverId: config.id, error });
+            // Only emit if there are listeners to avoid unhandled errors in tests
+            if (this.listenerCount('error') > 0) {
+                this.emit('error', { serverId: config.id, error });
+            }
             return false;
         }
     }
@@ -137,7 +140,7 @@ export class MCPClientManager extends EventEmitter {
         }
 
         try {
-            console.log(`[MCP] Calling tool: ${toolCall.toolName}`);
+            console.log(`[MCP] Calling tool: ${toolCall.toolName}`, { toolCall });
 
             const response = await client.callTool({
                 name: toolCall.toolName,
@@ -154,7 +157,7 @@ export class MCPClientManager extends EventEmitter {
 
             return result;
         } catch (error) {
-            console.error(`[MCP] Tool call failed:`, error);
+            console.error(`[MCP] Tool call failed:`, error, { toolCall });
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',

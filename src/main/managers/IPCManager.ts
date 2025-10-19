@@ -149,13 +149,14 @@ export class IPCManager {
         // Connect to MCP server
         ipcMain.handle('mcp:connect-server', async (_event, config: MCPServerConfig) => {
             try {
+                this.logger.info('[IPC] Connecting to MCP server', { serverName: config.name });
                 const success = await this.mcpClientManager.connectToServer(config);
                 if (success) {
                     this.databaseManager.saveMCPServer(config);
                 }
                 return { success, serverId: config.id };
             } catch (error) {
-                this.logger.error('[IPC] MCP connect error:', error);
+                this.logger.error('[IPC] MCP connect error:', error, { serverId: config.id });
                 return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
             }
         });

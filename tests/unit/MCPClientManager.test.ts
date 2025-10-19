@@ -52,9 +52,8 @@ describe('MCPClientManager', () => {
                 createdAt: Date.now()
             };
 
-            const eventPromise = new Promise((resolve) => {
-                manager.once('server-connected', resolve);
-            });
+            // Wait for server-connected event if it occurs (not required for this test)
+            manager.once('server-connected', () => { });
 
             // This will likely fail without a real MCP server, but tests the flow
             const result = await manager.connectToServer(config);
