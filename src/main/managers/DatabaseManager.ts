@@ -4,140 +4,6 @@ import { PageMetadata, HistorySearchOptions } from '../../shared/types/DataTypes
 import { Logger } from '../../shared/utils/Logger';
 
 /**
- * Minimal in-memory fallback DB that mimics the subset of better-sqlite3 used by DatabaseManager.
- * This is only used when the native better-sqlite3 cannot be loaded (for example in Jest test envs).
- */
-class InMemoryDB {
-    private rows: PageMetadata[] = [];
-
-    public exec(_sql: string): void {
-        // No-op for table/index creation statements
-    }
-
-    public prepare(sql: string) {
-        const normalized = sql.trim().toLowerCase();
-
-        if (normalized.startsWith('insert into page_metadata')) {
-            return {
-                run: (url: string, title: string, description: string, keywords: string, content_snippet: string, visit_timestamp: string, favicon_url: string) => {
-                    const now = new Date().toISOString();
-                    const existing = this.rows.find(r => r.url === url);
-                    if (existing) {
-                        existing.title = title || existing.title;
-                        existing.description = description || existing.description || '';
-                        existing.keywords = keywords || existing.keywords || '';
-                        existing.content_snippet = content_snippet || existing.content_snippet;
-                        existing.visit_timestamp = visit_timestamp || existing.visit_timestamp;
-                        existing.favicon_url = favicon_url || existing.favicon_url || '';
-                        existing.visit_count = (existing.visit_count || 1) + 1;
-                        existing.updated_at = now;
-                        return { changes: 1 };
-                    } else {
-                        const newRow: PageMetadata & { id?: number; created_at?: string; updated_at?: string; visit_count?: number } = {
-                            url,
-                            title: title || '',
-                            description: description || '',
-                            keywords: keywords || '',
-                            content_snippet: content_snippet || '',
-                            visit_timestamp: visit_timestamp || now,
-                            visit_count: 1,
-                            favicon_url: favicon_url || '',
-                            created_at: now,
-                            updated_at: now
-                        };
-                        this.rows.push(newRow as PageMetadata);
-                        return { changes: 1 };
-                    }
-                }
-            };
-        }
-
-        if (normalized.startsWith('select * from page_metadata') && normalized.includes('where')) {
-            // searchPages
-            return {
-                all: (a: string, _b: string, _c: string, _d: string, limit: number) => {
-                    const extract = (pattern: string) => pattern.replace(/%/g, '').toLowerCase();
-                    const q = extract(a || '');
-                    const results = this.rows.filter(r => {
-                        const t = (r.title || '').toLowerCase();
-                        const desc = (r.description || '').toLowerCase();
-                        const snippet = (r.content_snippet || '').toLowerCase();
-                        const url = (r.url || '').toLowerCase();
-                        return t.includes(q) || desc.includes(q) || snippet.includes(q) || url.includes(q);
-                    });
-
-                    results.sort((x, y) => {
-                        const vx = x.visit_count || 0;
-                        const vy = y.visit_count || 0;
-                        if (vy !== vx) return vy - vx;
-                        const tx = x.visit_timestamp || '';
-                        const ty = y.visit_timestamp || '';
-                        return ty.localeCompare(tx);
-                    });
-
-                    return results.slice(0, limit);
-                }
-            };
-        }
-
-        if (normalized.startsWith('select * from page_metadata') && normalized.includes('order by visit_timestamp')) {
-            return {
-                all: (limit: number) => {
-                    const results = [...this.rows].sort((a, b) => (b.visit_timestamp || '').localeCompare(a.visit_timestamp || ''));
-                    return results.slice(0, limit);
-                }
-            };
-        }
-
-        if (normalized.startsWith('select * from page_metadata') && normalized.includes('order by visit_count')) {
-            return {
-                all: (limit: number) => {
-                    const results = [...this.rows].sort((a, b) => {
-                        const dv = (b.visit_count || 0) - (a.visit_count || 0);
-                        if (dv !== 0) return dv;
-                        return (b.visit_timestamp || '').localeCompare(a.visit_timestamp || '');
-                    });
-                    return results.slice(0, limit);
-                }
-            };
-        }
-
-        if (normalized.startsWith('delete from page_metadata')) {
-            return {
-                run: () => {
-                    const changes = this.rows.length;
-                    this.rows = [];
-                    return { changes };
-                }
-            };
-        }
-
-        if (normalized.startsWith('select count(*)')) {
-            return {
-                get: () => ({ count: this.rows.length })
-            };
-        }
-
-        if (normalized.startsWith('select sum(visit_count)')) {
-            return {
-                get: () => ({ count: this.rows.reduce((s, r) => s + (r.visit_count || 0), 0) })
-            };
-        }
-
-        // Default fallback: return no-op methods
-        return {
-            run: () => ({ changes: 0 }),
-            get: () => undefined,
-            all: () => []
-        };
-    }
-
-    public close(): void {
-        // No-op
-    }
-}
-
-/**
  * Manages SQLite database operations for browsing history and metadata
  */
 export class DatabaseManager {
@@ -161,9 +27,9 @@ export class DatabaseManager {
                 const BetterSqlite3 = require('better-sqlite3');
                 this.db = new BetterSqlite3(this.dbPath);
             } catch (err) {
-                // Native addon failed to load (common in test environments) - use in-memory fallback
-                this.logger.error('Failed to initialize native better-sqlite3, using in-memory fallback:', err);
-                this.db = new InMemoryDB();
+                this.logger.error('Failed to initialize native better-sqlite3; initialization will abort.', err);
+                const suggestion = `\nSuggested fixes:\n 1) Ensure dependencies are installed: rm -rf node_modules && npm ci\n 2) Rebuild native modules for Electron: npx electron-rebuild -f -w better-sqlite3\n 3) Alternatively try: npm rebuild better-sqlite3 --update-binary\n 4) If packaging, rely on electron-builder (it rebuilds natives for target electron)\n`;
+                throw new Error('native better-sqlite3 is required but could not be loaded: ' + String(err) + suggestion);
             }
 
             this.createTables();

@@ -135,26 +135,24 @@ export class MCPSettingsManager extends EventEmitter {
                         ${server.enabled ? 'Enabled' : 'Disabled'}
                     </div>
                     <div class="mcp-server-supervise">
-                        Supervise: <input type="checkbox" data-action="toggle-supervise" data-server-id="${server.id}" ${server.supervise ? 'checked' : ''} />
+                        <label class="switch"> 
+                            <input type="checkbox" data-action="toggle-enabled" data-server-id="${server.id}" ${server.enabled ? 'checked' : ''} />
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn-icon" data-action="edit-json" data-server-id="${server.id}">JSON</button>
                         <div class="mcp-server-supervise-status" id="supervise-status-${server.id}">PID: - | Attempts: 0</div>
                         <div class="mcp-server-last-stderr" id="stderr-${server.id}"></div>
-                        <div class="mcp-server-restart-progress" id="progress-${server.id}" style="width:100%;height:8px;background:#eee;margin-top:6px;border-radius:4px;overflow:hidden;display:none;">
-                            <div class="mcp-server-restart-bar" id="progress-bar-${server.id}" style="height:100%;width:0%;background:#4caf50;transition:width 0.5s linear;"></div>
-                        </div>
                     </div>
                 </div>
                 <div class="mcp-server-actions">
-                    <button class="btn-icon" data-action="discover" data-server-id="${server.id}">
-                        🔍 Discover
-                    </button>
-                    <button class="btn-icon danger" data-action="delete" data-server-id="${server.id}">
-                        🗑️ Delete
-                    </button>
+                    <button class="btn-icon" data-action="discover" data-server-id="${server.id}">🔍 Discover</button>
+                    <button class="btn-icon" data-action="restart" data-server-id="${server.id}">🔁 Restart</button>
+                    <button class="btn-icon danger" data-action="delete" data-server-id="${server.id}">🗑️ Delete</button>
                 </div>
             </div>
         `).join('');
 
-        // Add event listeners to action buttons and supervise toggles
+        // Add event listeners to action buttons and toggles
         this.serverList.querySelectorAll('.btn-icon').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const target = e.currentTarget as HTMLElement;
@@ -165,12 +163,14 @@ export class MCPSettingsManager extends EventEmitter {
                     this.discoverTools(serverId);
                 } else if (action === 'delete' && serverId) {
                     this.deleteServer(serverId);
+                } else if (action === 'restart' && serverId) {
+                    this.restartServer(serverId);
                 }
             });
         });
 
-        // Supervise toggle
-        this.serverList.querySelectorAll('input[data-action="toggle-supervise"]').forEach(cb => {
+        // Enabled toggle and JSON edit button handlers
+        this.serverList.querySelectorAll('input[data-action="toggle-enabled"]').forEach(cb => {
             cb.addEventListener('change', async (e) => {
                 const input = e.currentTarget as HTMLInputElement;
                 const serverId = input.dataset.serverId;
@@ -179,21 +179,31 @@ export class MCPSettingsManager extends EventEmitter {
                 const server = this.servers.find(s => s.id === serverId);
                 if (!server) return;
 
-                // Toggle supervise flag and persist via setServerEnabled (keep enabled state)
-                server.supervise = input.checked;
+                // Toggle enabled state and persist
+                const prev = server.enabled;
+                server.enabled = input.checked;
                 const response = await mcpBridge.setServerEnabled(server, server.enabled);
                 if (!response || !response.success) {
-                    this.showError('Failed to update supervise setting');
-                    input.checked = !input.checked; // revert
+                    this.showError('Failed to update enabled setting');
+                    input.checked = prev; // revert
+                    server.enabled = prev;
                     return;
                 }
 
-                // Refresh status display
-                this.updateSuperviseStatus(serverId);
+                this.updateServerStatus(serverId, server.enabled ? 'Enabled' : 'Disabled');
             });
         });
 
-        // Initial status fetch for supervised servers
+        this.serverList.querySelectorAll('button[data-action="edit-json"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.currentTarget as HTMLElement;
+                const serverId = target.dataset.serverId;
+                if (!serverId) return;
+                this.showJsonEditor(serverId);
+            });
+        });
+
+        // Initial status fetch for supervised servers (UI reads status but no auto-retries)
         this.servers.forEach(s => {
             if (s.supervise) this.updateSuperviseStatus(s.id);
         });
@@ -275,6 +285,61 @@ export class MCPSettingsManager extends EventEmitter {
         (document.getElementById('permShareSelection') as HTMLInputElement).checked = false;
     }
 
+    private showJsonEditor(serverId: string): void {
+        const modal = document.getElementById('mcpServerJsonModal');
+        const textarea = document.getElementById('mcpServerJson') as HTMLTextAreaElement | null;
+        if (!modal || !textarea) return;
+
+        const server = this.servers.find(s => s.id === serverId);
+        if (!server) return;
+
+        textarea.value = JSON.stringify(server, null, 2);
+        modal.classList.remove('hidden');
+
+        // Setup save/cancel handlers
+        const saveBtn = document.getElementById('mcpJsonSaveBtn');
+        const cancelBtn = document.getElementById('mcpJsonCancelBtn');
+        const closeBtn = document.getElementById('mcpJsonModalClose');
+
+        const onSave = async () => {
+            try {
+                const updated = JSON.parse(textarea.value);
+                // Ensure required fields
+                if (!updated.id || !updated.name || !updated.command) {
+                    this.showError('JSON must include id, name and command');
+                    return;
+                }
+
+                // Persist via connectServer (which saves on success) or setServerEnabled
+                const resp = await mcpBridge.connectServer(updated);
+                if (resp.success) {
+                    // replace local server copy and re-render
+                    this.servers = this.servers.map(s => s.id === updated.id ? updated : s);
+                    this.renderServers();
+                    this.updateIndicator();
+                    this.showSuccess('Server JSON updated');
+                    modal.classList.add('hidden');
+                } else {
+                    this.showError(resp.error || 'Failed to apply server JSON');
+                }
+            } catch (err) {
+                this.showError('Invalid JSON: ' + (err instanceof Error ? err.message : String(err)));
+            }
+        };
+
+        const onCancel = () => {
+            modal.classList.add('hidden');
+        };
+
+        saveBtn?.removeEventListener('click', onSave as any);
+        cancelBtn?.removeEventListener('click', onCancel as any);
+        closeBtn?.removeEventListener('click', onCancel as any);
+
+        saveBtn?.addEventListener('click', onSave as any);
+        cancelBtn?.addEventListener('click', onCancel as any);
+        closeBtn?.addEventListener('click', onCancel as any);
+    }
+
     private async saveServer(): Promise<void> {
         const name = (document.getElementById('mcpServerName') as HTMLInputElement).value.trim();
         const command = (document.getElementById('mcpServerCommand') as HTMLInputElement).value.trim();
@@ -323,6 +388,31 @@ export class MCPSettingsManager extends EventEmitter {
             this.showToolsDialog(serverId, response.tools);
         } else {
             this.showError(response.error || 'Failed to discover tools');
+        }
+    }
+
+    async restartServer(serverId: string): Promise<void> {
+        const server = this.servers.find(s => s.id === serverId);
+        if (!server) return;
+
+        // Show simple confirmation
+        if (!confirm(`Restart server "${server.name}"? This will stop and then attempt to start it.`)) return;
+
+        try {
+            // Disconnect then reconnect
+            await mcpBridge.disconnectServer(serverId);
+            // small delay to ensure process cleanup
+            await new Promise(r => setTimeout(r, 300));
+            const resp = await mcpBridge.connectServer(server);
+            if (resp.success) {
+                this.showSuccess(`Server "${server.name}" restarted`);
+                // refresh list/status
+                await this.loadServers();
+            } else {
+                this.showError(resp.error || 'Failed to restart server');
+            }
+        } catch (err) {
+            this.showError('Restart failed: ' + (err instanceof Error ? err.message : String(err)));
         }
     }
 

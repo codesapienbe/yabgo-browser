@@ -21,9 +21,21 @@ install:
 	npm install
 
 run:
-	npm run prod
+	# Run the application without building; assume developer has built assets and native modules
+	if [ -x "$(npm bin)/electron" ]; then \
+		$(npm bin)/electron --no-sandbox .; \
+	else \
+		npx electron --no-sandbox .; \
+	fi
 
 build:
+	# Ensure native modules are rebuilt for the current Electron runtime before building
+	# This prevents invalid ELF/header errors from mismatched prebuilt binaries
+	if [ -x "$(npm bin)/electron-rebuild" ]; then \
+		$(npm bin)/electron-rebuild -f -w better-sqlite3 || true; \
+	else \
+		npx electron-rebuild -f -w better-sqlite3 || true; \
+	fi
 	npm run build
 
 sign:

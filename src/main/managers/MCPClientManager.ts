@@ -14,14 +14,7 @@ export class MCPClientManager extends EventEmitter {
     private transports: Map<string, StdioClientTransport> = new Map();
     private supervisedChildProcesses: Map<string, ChildProcessWithoutNullStreams> = new Map();
     private configs: Map<string, MCPServerConfig> = new Map();
-    private reconnectTimers: Map<string, NodeJS.Timeout> = new Map();
-    private reconnectAttempts: Map<string, number> = new Map();
     private lastStderr: Map<string, string> = new Map();
-    private nextReconnectAt: Map<string, number> = new Map();
-    private nextDelay: Map<string, number> = new Map();
-    private readonly MAX_RECONNECT_ATTEMPTS = 6;
-    private readonly INITIAL_RECONNECT_DELAY_MS = 1000; // 1s
-    private readonly MAX_RECONNECT_DELAY_MS = 300000; // 5m
 
     constructor() {
         super();
@@ -101,28 +94,11 @@ export class MCPClientManager extends EventEmitter {
             this.transports.set(config.id, transport);
             this.configs.set(config.id, config);
 
-            // Reset reconnect attempts and timers
-            this.reconnectAttempts.set(config.id, 0);
-            const existingTimer = this.reconnectTimers.get(config.id);
-            if (existingTimer) {
-                clearTimeout(existingTimer);
-                this.reconnectTimers.delete(config.id);
-            }
+            // No automatic reconnect state maintained; user toggles server to retry
 
             // Attach close/error listeners to trigger reconnection when appropriate
             (client as any).on('close', (...args: any[]) => {
                 console.warn(`[MCP] Client closed for ${config.id}`, { args });
-                // Only attempt reconnect if server config remains enabled
-                const stored = this.configs.get(config.id);
-                if (stored && stored.enabled) {
-                    // If supervise is enabled, attempt to restart the process first
-                    if (stored.supervise) {
-                        this.restartSupervisedProcess(config.id, stored);
-                    } else {
-                        this.startReconnect(config.id);
-                    }
-                }
-                // Emit server-disconnected for UI
                 this.emit('server-disconnected', config.id);
             });
             (client as any).on('error', (err: any) => {
@@ -148,15 +124,7 @@ export class MCPClientManager extends EventEmitter {
      * Disconnect from an MCP server
      */
     async disconnectServer(serverId: string): Promise<void> {
-        // Clear any reconnection timers
-        const timer = this.reconnectTimers.get(serverId);
-        if (timer) {
-            clearTimeout(timer);
-            this.reconnectTimers.delete(serverId);
-        }
-
-        // Reset reconnect attempts
-        this.reconnectAttempts.delete(serverId);
+        // No reconnection timers to clear; disconnect client and supervised process
 
         const client = this.clients.get(serverId);
         if (client) {
@@ -194,12 +162,6 @@ export class MCPClientManager extends EventEmitter {
         // Update stored config
         this.configs.set(serverConfig.id, serverConfig);
         if (!enabled) {
-            // Stop reconnect attempts and disconnect
-            const timer = this.reconnectTimers.get(serverConfig.id);
-            if (timer) {
-                clearTimeout(timer);
-                this.reconnectTimers.delete(serverConfig.id);
-            }
             await this.disconnectServer(serverConfig.id);
             return true;
         }
@@ -209,78 +171,7 @@ export class MCPClientManager extends EventEmitter {
         return await this.connectToServer(serverConfig);
     }
 
-    private startReconnect(serverId: string): void {
-        const attempts = this.reconnectAttempts.get(serverId) || 0;
-        if (attempts >= this.MAX_RECONNECT_ATTEMPTS) {
-            console.warn(`[MCP] Max reconnect attempts reached for ${serverId}`);
-            return;
-        }
-
-        const delay = Math.min(this.INITIAL_RECONNECT_DELAY_MS * Math.pow(2, attempts), this.MAX_RECONNECT_DELAY_MS);
-        console.info(`[MCP] Scheduling reconnect for ${serverId} in ${delay}ms (attempt ${attempts + 1})`);
-
-        const timer = setTimeout(async () => {
-            // clear scheduled time and delay as we are executing the attempt
-            this.nextReconnectAt.delete(serverId);
-            this.nextDelay.delete(serverId);
-            this.reconnectAttempts.set(serverId, (this.reconnectAttempts.get(serverId) || 0) + 1);
-            const cfg = this.configs.get(serverId);
-            if (!cfg) {
-                console.warn(`[MCP] No config found for ${serverId}, aborting reconnect`);
-                return;
-            }
-            // If the server was disabled while waiting, abort
-            if (!cfg.enabled) {
-                console.info(`[MCP] Server ${serverId} disabled; aborting reconnect`);
-                return;
-            }
-
-            try {
-                const ok = await this.connectToServer(cfg);
-                if (!ok) {
-                    // schedule next attempt
-                    this.startReconnect(serverId);
-                }
-            } catch (err) {
-                console.error(`[MCP] Reconnect attempt failed for ${serverId}:`, err);
-                this.startReconnect(serverId);
-            }
-        }, delay) as unknown as NodeJS.Timeout;
-
-        // Clear previous timer if any
-        const prev = this.reconnectTimers.get(serverId);
-        if (prev) clearTimeout(prev);
-        this.reconnectTimers.set(serverId, timer);
-        // store next scheduled attempt timestamp and the scheduled delay
-        this.nextReconnectAt.set(serverId, Date.now() + delay);
-        this.nextDelay.set(serverId, delay);
-    }
-
-    /**
-     * Restart a supervised server process by attempting to reconnect (which spawns a new child process).
-     */
-    private async restartSupervisedProcess(serverId: string, config: MCPServerConfig): Promise<void> {
-        try {
-            console.info(`[MCP] Attempting supervised restart for ${serverId}`);
-            // Ensure any existing client/transport are cleaned up
-            await this.disconnectServer(serverId);
-
-            // Small delay before restart to avoid tight restart loops
-            await new Promise(r => setTimeout(r, 500));
-
-            // Reconnect which will spawn a new process via StdioClientTransport
-            const ok = await this.connectToServer(config);
-            if (!ok) {
-                console.warn(`[MCP] Supervised restart failed for ${serverId}, scheduling reconnect/backoff`);
-                this.startReconnect(serverId);
-            } else {
-                console.info(`[MCP] Supervised restart succeeded for ${serverId}`);
-            }
-        } catch (err) {
-            console.error(`[MCP] Supervised restart error for ${serverId}:`, err);
-            this.startReconnect(serverId);
-        }
-    }
+    // startReconnect and restartSupervisedProcess removed — reconnection is manual
 
     /**
      * Check if a server is connected
@@ -381,12 +272,6 @@ export class MCPClientManager extends EventEmitter {
      * Cleanup all connections
      */
     async cleanup(): Promise<void> {
-        // Clear all reconnection timers
-        for (const timer of this.reconnectTimers.values()) {
-            clearTimeout(timer);
-        }
-        this.reconnectTimers.clear();
-
         // Disconnect all servers with error handling
         const disconnectPromises = Array.from(this.clients.keys()).map(id =>
             this.disconnectServer(id).catch(error => {

@@ -137,6 +137,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- JSON Edit Modal -->
+        <div id="mcpServerJsonModal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit MCP Server JSON</h2>
+                    <button class="modal-close" id="mcpJsonModalClose">×</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Server JSON</label>
+                    <textarea id="mcpServerJson" style="width:100%;height:260px;font-family:monospace"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-primary" id="mcpJsonSaveBtn">Save & Apply</button>
+                    <button class="btn-secondary" id="mcpJsonCancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="renderer.bundle.js"></script>

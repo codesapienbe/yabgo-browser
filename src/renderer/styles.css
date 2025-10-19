@@ -933,6 +933,15 @@ body {
     color: #ef4444;
 }
 
+/* JSON modal styles */
+.modal textarea#mcpServerJson {
+    background: rgba(0, 0, 0, 0.06);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px;
+    border-radius: 6px;
+}
+
 .form-group {
     margin-bottom: 16px;
 }
