@@ -28,7 +28,7 @@ export class MCPBridge {
         return await window.yabgo.mcp.setServerEnabled(config, enabled);
     }
 
-    async getServerStatus(serverId: string): Promise<{ success: boolean; status?: { pid: number | null; attempts: number; lastStderr?: string }; error?: string }> {
+    async getServerStatus(serverId: string): Promise<{ success: boolean; status?: { pid: number | null; attempts: number; lastStderr?: string; nextAt?: number }; error?: string }> {
         return await window.yabgo.mcp.getServerStatus(serverId);
     }
 

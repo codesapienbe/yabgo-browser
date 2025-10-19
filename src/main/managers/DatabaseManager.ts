@@ -237,6 +237,21 @@ export class DatabaseManager {
 
         this.db.exec(mcpSQL);
         this.logger.info('MCP tables created successfully');
+        // Ensure supervise and cwd fields exist in stored configs (backfill)
+        try {
+            const rows = this.db.prepare('SELECT id, config FROM mcp_servers').all();
+            const updateStmt = this.db.prepare(`INSERT OR REPLACE INTO mcp_servers (id, name, config, created_at, last_used) VALUES (?, ?, ?, ?, ?)`);
+            for (const row of rows) {
+                const cfg = JSON.parse(row.config);
+                if (cfg.supervise === undefined || cfg.cwd === undefined) {
+                    cfg.supervise = cfg.supervise === undefined ? false : cfg.supervise;
+                    cfg.cwd = cfg.cwd === undefined ? undefined : cfg.cwd;
+                    updateStmt.run(row.id, cfg.name, JSON.stringify(cfg), cfg.createdAt || Date.now(), cfg.lastUsed || null);
+                }
+            }
+        } catch (err) {
+            // ignore backfill errors
+        }
     }
 
     /**

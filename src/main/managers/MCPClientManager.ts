@@ -17,12 +17,11 @@ export class MCPClientManager extends EventEmitter {
     private reconnectTimers: Map<string, NodeJS.Timeout> = new Map();
     private reconnectAttempts: Map<string, number> = new Map();
     private lastStderr: Map<string, string> = new Map();
+    private nextReconnectAt: Map<string, number> = new Map();
+    private nextDelay: Map<string, number> = new Map();
     private readonly MAX_RECONNECT_ATTEMPTS = 6;
     private readonly INITIAL_RECONNECT_DELAY_MS = 1000; // 1s
     private readonly MAX_RECONNECT_DELAY_MS = 300000; // 5m
-    // Reserved for future reconnection logic
-    // private readonly MAX_RECONNECT_ATTEMPTS = 3;
-    // private readonly RECONNECT_DELAY = 5000; // 5 seconds
 
     constructor() {
         super();
@@ -221,6 +220,9 @@ export class MCPClientManager extends EventEmitter {
         console.info(`[MCP] Scheduling reconnect for ${serverId} in ${delay}ms (attempt ${attempts + 1})`);
 
         const timer = setTimeout(async () => {
+            // clear scheduled time and delay as we are executing the attempt
+            this.nextReconnectAt.delete(serverId);
+            this.nextDelay.delete(serverId);
             this.reconnectAttempts.set(serverId, (this.reconnectAttempts.get(serverId) || 0) + 1);
             const cfg = this.configs.get(serverId);
             if (!cfg) {
@@ -249,6 +251,9 @@ export class MCPClientManager extends EventEmitter {
         const prev = this.reconnectTimers.get(serverId);
         if (prev) clearTimeout(prev);
         this.reconnectTimers.set(serverId, timer);
+        // store next scheduled attempt timestamp and the scheduled delay
+        this.nextReconnectAt.set(serverId, Date.now() + delay);
+        this.nextDelay.set(serverId, delay);
     }
 
     /**

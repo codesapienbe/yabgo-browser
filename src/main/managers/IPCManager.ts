@@ -216,7 +216,8 @@ export class IPCManager {
                 const pid = this.mcpClientManager['supervisedChildProcesses'].get(serverId)?.pid || null;
                 const attempts = this.mcpClientManager['reconnectAttempts'].get(serverId) || 0;
                 const lastStderr = this.mcpClientManager['lastStderr'].get(serverId) || null;
-                return { success: true, status: { pid, attempts, lastStderr } };
+                const nextAt = this.mcpClientManager['nextReconnectAt'].get(serverId) || null;
+                return { success: true, status: { pid, attempts, lastStderr, nextAt } };
             } catch (error) {
                 this.logger.error('[IPC] MCP get-server-status error:', error);
                 return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };

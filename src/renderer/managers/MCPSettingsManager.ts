@@ -14,6 +14,8 @@ export class MCPSettingsManager extends EventEmitter {
     private indicatorText: HTMLElement | null = null;
     private renderDebounceTimer: NodeJS.Timeout | null = null;
     private statusInterval: number | null = null;
+    private interpInterval: number | null = null;
+    private lastStatus: Map<string, { nextAt: number | null; initialDelay: number | null; attempts: number; pid: number | null; lastStderr?: string | null }> = new Map();
 
     constructor() {
         super();
@@ -136,6 +138,9 @@ export class MCPSettingsManager extends EventEmitter {
                         Supervise: <input type="checkbox" data-action="toggle-supervise" data-server-id="${server.id}" ${server.supervise ? 'checked' : ''} />
                         <div class="mcp-server-supervise-status" id="supervise-status-${server.id}">PID: - | Attempts: 0</div>
                         <div class="mcp-server-last-stderr" id="stderr-${server.id}"></div>
+                        <div class="mcp-server-restart-progress" id="progress-${server.id}" style="width:100%;height:8px;background:#eee;margin-top:6px;border-radius:4px;overflow:hidden;display:none;">
+                            <div class="mcp-server-restart-bar" id="progress-bar-${server.id}" style="height:100%;width:0%;background:#4caf50;transition:width 0.5s linear;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="mcp-server-actions">
@@ -206,6 +211,27 @@ export class MCPSettingsManager extends EventEmitter {
                     });
                 }, 5000);
             }
+
+            // Start interpolation interval for smooth progress (1s)
+            if (!this.interpInterval) {
+                this.interpInterval = window.setInterval(() => {
+                    // update progress bars based on lastStatus
+                    this.lastStatus.forEach((st, id) => {
+                        const progressContainer = document.getElementById(`progress-${id}`) as HTMLElement | null;
+                        const progressBar = document.getElementById(`progress-bar-${id}`) as HTMLElement | null;
+                        if (!progressContainer || !progressBar) return;
+                        if (st.nextAt && st.initialDelay && st.initialDelay > 0) {
+                            const remaining = Math.max(0, st.nextAt - Date.now());
+                            const percent = Math.max(0, Math.min(100, Math.round((1 - (remaining / st.initialDelay)) * 100)));
+                            progressContainer.style.display = 'block';
+                            progressBar.style.width = `${percent}%`;
+                        } else {
+                            progressContainer.style.display = 'none';
+                            progressBar.style.width = `0%`;
+                        }
+                    });
+                }, 1000);
+            }
         }
     }
 
@@ -215,6 +241,10 @@ export class MCPSettingsManager extends EventEmitter {
             if (this.statusInterval) {
                 clearInterval(this.statusInterval);
                 this.statusInterval = null;
+            }
+            if (this.interpInterval) {
+                clearInterval(this.interpInterval);
+                this.interpInterval = null;
             }
         }
     }
@@ -330,13 +360,34 @@ export class MCPSettingsManager extends EventEmitter {
             const resp = await mcpBridge.getServerStatus(serverId);
             if (!resp || !resp.success) return;
             const status = resp.status;
+            const st = status || { pid: null as number | null, attempts: 0, lastStderr: null as string | null, nextAt: null as number | null };
             const el = document.getElementById(`supervise-status-${serverId}`);
             if (el) {
-                el.textContent = `PID: ${status.pid ?? '-'} | Attempts: ${status.attempts ?? 0}`;
+                const nextAt = st.nextAt ? Math.max(0, Math.ceil((st.nextAt - Date.now()) / 1000)) : null;
+                const nextText = nextAt !== null ? ` | Next in: ${nextAt}s` : '';
+                el.textContent = `PID: ${st.pid ?? '-'} | Attempts: ${st.attempts ?? 0}${nextText}`;
             }
             const stderrEl = document.getElementById(`stderr-${serverId}`);
             if (stderrEl) {
-                stderrEl.textContent = status.lastStderr ? `Last stderr: ${status.lastStderr}` : '';
+                stderrEl.textContent = st.lastStderr ? `Last stderr: ${st.lastStderr}` : '';
+            }
+
+            // Store last status for interpolation on client side and update progress immediately
+            const initialDelay = st.nextAt ? Math.max(1, st.nextAt - Date.now()) : null;
+            this.lastStatus.set(serverId, { nextAt: st.nextAt ?? null, initialDelay, attempts: st.attempts ?? 0, pid: st.pid ?? null, lastStderr: st.lastStderr ?? null });
+
+            const progressContainer = document.getElementById(`progress-${serverId}`) as HTMLElement | null;
+            const progressBar = document.getElementById(`progress-bar-${serverId}`) as HTMLElement | null;
+            if (progressContainer && progressBar) {
+                if (st.nextAt && initialDelay && st.nextAt > Date.now()) {
+                    const remaining = Math.max(0, st.nextAt - Date.now());
+                    const percent = Math.max(0, Math.min(100, Math.round((1 - (remaining / initialDelay)) * 100)));
+                    progressContainer.style.display = 'block';
+                    progressBar.style.width = `${percent}%`;
+                } else {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = `0%`;
+                }
             }
         } catch (err) {
             // ignore
