@@ -13,6 +13,7 @@ export class MCPSettingsManager extends EventEmitter {
     private indicator: HTMLElement | null = null;
     private indicatorText: HTMLElement | null = null;
     private renderDebounceTimer: NodeJS.Timeout | null = null;
+    private statusInterval: number | null = null;
 
     constructor() {
         super();
@@ -197,12 +198,24 @@ export class MCPSettingsManager extends EventEmitter {
         if (this.settingsModal) {
             this.settingsModal.classList.remove('hidden');
             this.loadServers(); // Refresh server list
+            // Start periodic status updater (every 5s)
+            if (!this.statusInterval) {
+                this.statusInterval = window.setInterval(() => {
+                    this.servers.forEach(s => {
+                        if (s.supervise) this.updateSuperviseStatus(s.id);
+                    });
+                }, 5000);
+            }
         }
     }
 
     private hideSettingsModal(): void {
         if (this.settingsModal) {
             this.settingsModal.classList.add('hidden');
+            if (this.statusInterval) {
+                clearInterval(this.statusInterval);
+                this.statusInterval = null;
+            }
         }
     }
 
@@ -223,6 +236,10 @@ export class MCPSettingsManager extends EventEmitter {
         (document.getElementById('mcpServerName') as HTMLInputElement).value = '';
         (document.getElementById('mcpServerCommand') as HTMLInputElement).value = '';
         (document.getElementById('mcpServerArgs') as HTMLInputElement).value = '';
+        const cwdEl = document.getElementById('mcpServerCwd') as HTMLInputElement | null;
+        if (cwdEl) cwdEl.value = '';
+        const superviseEl = document.getElementById('mcpSupervise') as HTMLInputElement | null;
+        if (superviseEl) superviseEl.checked = false;
         (document.getElementById('permShareHistory') as HTMLInputElement).checked = false;
         (document.getElementById('permShareContent') as HTMLInputElement).checked = false;
         (document.getElementById('permShareSelection') as HTMLInputElement).checked = false;
@@ -232,6 +249,8 @@ export class MCPSettingsManager extends EventEmitter {
         const name = (document.getElementById('mcpServerName') as HTMLInputElement).value.trim();
         const command = (document.getElementById('mcpServerCommand') as HTMLInputElement).value.trim();
         const argsStr = (document.getElementById('mcpServerArgs') as HTMLInputElement).value.trim();
+        const cwd = (document.getElementById('mcpServerCwd') as HTMLInputElement).value.trim();
+        const supervise = (document.getElementById('mcpSupervise') as HTMLInputElement).checked;
 
         if (!name || !command) {
             this.showError('Name and command are required');
@@ -243,6 +262,8 @@ export class MCPSettingsManager extends EventEmitter {
             name,
             command,
             args: argsStr ? argsStr.split(',').map(s => s.trim()).filter(Boolean) : [],
+            cwd: cwd || undefined,
+            supervise,
             enabled: true,
             permissions: {
                 shareHistory: (document.getElementById('permShareHistory') as HTMLInputElement).checked,
