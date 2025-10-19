@@ -46,9 +46,9 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         },
     },
     {
-        name: 'Git',
+        name: 'Everything',
         command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-git'],
+        args: ['-y', '@modelcontextprotocol/server-everything'],
         enabled: true,
         permissions: {
             shareHistory: false,
@@ -58,9 +58,21 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         },
     },
     {
-        name: 'Time',
+        name: 'Starter',
         command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-time'],
+        args: ['-y', 'mcp-starter'],
+        enabled: true,
+        permissions: {
+            shareHistory: false,
+            sharePageContent: false,
+            shareSelections: false,
+            allowedDomains: [],
+        },
+    },
+    {
+        name: 'SequentialThinking',
+        command: 'npx',
+        args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
         enabled: true,
         permissions: {
             shareHistory: false,

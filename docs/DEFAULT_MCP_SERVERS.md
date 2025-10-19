@@ -1,3 +1,33 @@
+Default MCP Servers
+===================
+
+This document describes the default MCP servers bundled with YABGO Browser and how to enable or customize them.
+
+Included (enabled by default):
+
+- Filesystem (`@modelcontextprotocol/server-filesystem`)
+  - Provides read/write and file utilities over MCP (no API key required).
+  - By default it is pointed at the user's home directory.
+
+- Memory (`@modelcontextprotocol/server-memory`)
+  - In-memory knowledge graph server for quick demos. No API key.
+
+- Everything (`@modelcontextprotocol/server-everything`)
+  - Demo server that exposes a wide set of tools for showcasing MCP features. No API key.
+
+- Starter (`mcp-starter`)
+  - Minimal demo server used for onboarding; small and stable.
+
+- SequentialThinking (`@modelcontextprotocol/server-sequential-thinking`)
+  - Demonstration server for sequence/problem solving tools.
+
+Optional (disabled by default):
+
+- Brave Search (`@modelcontextprotocol/server-brave-search`)
+  - Requires `BRAVE_API_KEY` environment variable. If you want to enable it, set `BRAVE_API_KEY` in your environment and enable the server in settings.
+
+If you want to use different servers, edit `src/shared/utils/DefaultMCPServers.ts` or add servers through the MCP settings UI. Servers started via `npx` are spawned locally and do not require external hosting.
+
 # Default MCP Servers
 
 YABGO Browser now comes with 5 pre-configured MCP servers that are automatically added on first run. These servers provide commonly useful functionality for generic users.

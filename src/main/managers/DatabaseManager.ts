@@ -252,6 +252,25 @@ export class DatabaseManager {
         } catch (err) {
             // ignore backfill errors
         }
+
+        // Ensure default servers are present with supervise:false and no cwd by default
+        try {
+            const existing = this.getMCPServers();
+            const defaultServers = require('../..//src/shared/utils/DefaultMCPServers').DEFAULT_MCP_SERVERS;
+            const shouldInit = existing.length === 0;
+            if (shouldInit) {
+                const createDefaultServerConfig = require('../..//src/shared/utils/DefaultMCPServers').createDefaultServerConfig;
+                for (const s of defaultServers) {
+                    const cfg = createDefaultServerConfig(s);
+                    // ensure supervise/cwd defaults
+                    cfg.supervise = s.supervise ?? false;
+                    cfg.cwd = s.cwd ?? undefined;
+                    this.saveMCPServer(cfg);
+                }
+            }
+        } catch (err) {
+            // ignore
+        }
     }
 
     /**
