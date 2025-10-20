@@ -33,7 +33,7 @@ WORKDIR /app
 COPY --chown=appuser:appuser package*.json ./
 
 # Install dependencies (including devDeps for build)
-RUN npm ci --only=production=false --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 # Copy source code
 COPY --chown=appuser:appuser . .
