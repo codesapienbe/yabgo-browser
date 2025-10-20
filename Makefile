@@ -37,6 +37,7 @@ sign:
 	npm run build:sign
 
 run:
+	@echo "Running YABGo Browser in Docker..."
 	# Run the application in Docker with X11, XAUTH, audio and GPU mounts
 	@echo "Starting app in Docker (ensure X is forwarded):";
 	# Validate DISPLAY
