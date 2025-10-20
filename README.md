@@ -106,19 +106,13 @@ In 2025, your data is often worth more than the software itself. We've chosen a 
 
 #### **Linux**
 
-**From Snap Store (Recommended)**:
-```bash
-sudo snap install yabgo-browser
-```
-
-**From AppImage**:
+**From AppImage (Recommended)**:
 1. Download `YABGO-Browser.AppImage` from [Releases](https://github.com/codesapienbe/yabgo-browser/releases)
 2. Make it executable: `chmod +x YABGO-Browser.AppImage`
 3. Run: `./YABGO-Browser.AppImage`
 
 **From App Stores**:
 - **Microsoft Store**: Search for "YABGO Browser" (signed & verified)
-- **Snap Store**: `sudo snap install yabgo-browser` (signed & verified)
 
 ---
 

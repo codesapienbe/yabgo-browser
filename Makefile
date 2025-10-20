@@ -87,5 +87,4 @@ clean:
 
 release:
 	@./scripts/release.sh || true
-	npm run build:snap
 

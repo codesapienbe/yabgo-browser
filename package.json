@@ -7,7 +7,6 @@
     "build": "bash scripts/build-all.sh",
     "build:docker": "rm -rf dist && pwd && ls -la tsconfig.json && ls -la src/main/managers/DatabaseManager.ts && tsc -p tsconfig.json && webpack --mode production && npm run copy:assets",
     "build:store": "bash scripts/build-store.sh",
-    "build:snap": "snapcraft",
     "build:sign": "bash scripts/sign-appimage.sh",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
     "list": "npm run",
