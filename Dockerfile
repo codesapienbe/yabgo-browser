@@ -1,8 +1,10 @@
-FROM node:18-bullseye
+FROM ghcr.io/electron/build:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Minimal system deps for Electron
+# Temporarily switch to root to run apt-get (some base images use a non-root user)
+USER root
 RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libnotify4 \
@@ -12,8 +14,15 @@ RUN apt-get update && apt-get install -y \
     libgbm1 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+# Return to default non-root user (UID 1000) used by the base image
+USER 1000
 
 WORKDIR /app
+
+# Ensure /app and npm cache are writable by the non-root user before installing
+USER root
+RUN mkdir -p /.npm /app && chown -R 1000:0 /.npm /app
+USER 1000
 
 # Install node modules (including devDeps so electron binary is available)
 COPY package*.json ./

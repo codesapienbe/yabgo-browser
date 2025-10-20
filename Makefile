@@ -30,8 +30,12 @@ build:
 	fi
 	# Build the app and build a Docker image containing the runnable Electron app
 	npm run build
-	# Build docker image (tag: yabgo-browser:latest)
-	docker build -t yabgo-browser:latest .
+
+
+deploy:
+	@echo "Deploy: use local image 'yabgo-browser:latest'...";
+	$(MAKE) build;
+	@echo "Deploy step complete.";
 
 sign:
 	npm run build:sign

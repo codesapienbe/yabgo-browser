@@ -66,6 +66,9 @@ else
   echo "Skipping Windows build: wine not available. To enable Windows builds locally install libwine or install wine64."
 fi
 
+echo "Building Docker image..."
+docker build -t yabgo-browser:latest .
+
 echo "Build complete. Artifacts are in the release/ directory."
 
 

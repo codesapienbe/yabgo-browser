@@ -29,7 +29,11 @@ export class SupervisedStdioTransport {
                         const parsed = JSON.parse(line);
                         this.onmessage?.(parsed);
                     } catch (err) {
-                        this.onerror?.(err as Error);
+                        try {
+                            console.debug(`[MCP][supervised][stdout] ${line}`);
+                        } catch (e) {
+                            // ignore logging failures
+                        }
                     }
                 }
             });
