@@ -19,9 +19,9 @@ USER 1000
 
 WORKDIR /app
 
-# Ensure /app and npm cache are writable by the non-root user before installing
+# Ensure /app, npm cache and generic cache locations are writable by the non-root user before installing
 USER root
-RUN mkdir -p /.npm /app && chown -R 1000:0 /.npm /app
+RUN mkdir -p /.npm /.cache /app && chown -R 1000:0 /.npm /.cache /app
 USER 1000
 
 # Install node modules (including devDeps so electron binary is available)
@@ -30,7 +30,9 @@ RUN npm ci
 
 # Copy source and build
 COPY . ./
-RUN npm run build || true
+# Switch to non-root user for build
+USER 1000
+RUN npm run build:docker
 
 # Run electron against the built assets. The container expects the host X server
 # to be exposed via DISPLAY and /tmp/.X11-unix. Use the Makefile run target to
