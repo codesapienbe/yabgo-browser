@@ -23,7 +23,47 @@ install:
 build:
 	@echo "Building YABGO Browser..."
 	npm run build
-	docker build -t yabgo-browser:latest .
+	docker build -f docker/Dockerfile -t yabgo-browser:latest .
+
+
+run: build
+	@echo "Running YABGo Browser..."
+	# Single entrypoint: 'make run' (host X) or 'make run vnc' (use VNC/noVNC)
+	if echo "$(MAKECMDGOALS)" | grep -q "vnc"; then \
+		@echo "Starting yabgo-browser with noVNC/VNC exposed..."; \
+		docker run --rm -p 5800:5800 -p 5900:5900 --name yabgo-browser yabgo-browser:latest; \
+	else \
+		@echo "Running yabgo-browser on host X (no VNC; mounts X11, audio and DBus automatically)"; \
+		if [ -z "${DISPLAY}" ]; then \
+			echo "ERROR: DISPLAY is not set on the host. Export DISPLAY (e.g. export DISPLAY=\":0\") to run on host X."; \
+			exit 1; \
+		fi; \
+		# XAUTH (default to ${HOME}/.Xauthority)
+		XAUTH_PATH="${XAUTH:-${HOME}/.Xauthority}"; \
+		XAUTH_ARGS=""; \
+		if [ -f "$$XAUTH_PATH" ]; then \
+			echo "Using XAUTH: $$XAUTH_PATH"; \
+			XAUTH_ARGS="-e XAUTHORITY=$$XAUTH_PATH -v $$XAUTH_PATH:$$XAUTH_PATH:ro"; \
+		else \
+			echo "No XAUTH file found at $$XAUTH_PATH; you may need to run 'xhost +local:root' before running."; \
+			XAUTH_ARGS=""; \
+		fi; \
+		# Pulse audio socket (per-user)
+		PULSE_SOCKET="/run/user/$$(id -u)/pulse/native"; \
+		PULSE_ARGS=""; \
+		if [ -S "$$PULSE_SOCKET" ]; then \
+			PULSE_ARGS="-v $$PULSE_SOCKET:$$PULSE_SOCKET:ro -e PULSE_SERVER=unix:$$PULSE_SOCKET"; \
+		fi; \
+		# DBus socket (optional)
+		DBUS_ARGS=""; \
+		if [ -S "/run/dbus/system_bus_socket" ]; then \
+			DBUS_ARGS="-v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro"; \
+		fi; \
+		# Run container with host X and devices mounted so GUI appears on host display
+		docker run --rm $${XAUTH_ARGS} -e DISPLAY=$$DISPLAY -e HOME=/tmp -e XDG_CACHE_HOME=/tmp/.cache -e XDG_CONFIG_HOME=/tmp/.config -v /tmp/.X11-unix:/tmp/.X11-unix $${PULSE_ARGS} $${DBUS_ARGS} \
+			--device /dev/snd --device /dev/dri --shm-size=1g --user $$(id -u):$$(id -g) --network host \
+			yabgo-browser:latest; \
+	fi
 
 
 deploy:
@@ -69,7 +109,7 @@ run:
 		DBUS_ARGS="-v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro"; \
 	fi; \
 
-	docker run --rm $${XAUTH_ARGS} -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix $${PULSE_ARGS} $${DBUS_ARGS} \
+	docker run --rm $${XAUTH_ARGS} -e DISPLAY=$$DISPLAY -e HOME=/tmp -e XDG_CACHE_HOME=/tmp/.cache -e XDG_CONFIG_HOME=/tmp/.config -v /tmp/.X11-unix:/tmp/.X11-unix $${PULSE_ARGS} $${DBUS_ARGS} \
 		--device /dev/snd --device /dev/dri --shm-size=1g --user $$(id -u):$$(id -g) --network host \
 		yabgo-browser:latest
 
