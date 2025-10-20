@@ -21,15 +21,9 @@ install:
 	npm install
 
 build:
-	# Ensure native modules are rebuilt for the current Electron runtime before building
-	# This prevents invalid ELF/header errors from mismatched prebuilt binaries
-	if [ -x "$(npm bin)/electron-rebuild" ]; then \
-		$(npm bin)/electron-rebuild -f -w better-sqlite3 || true; \
-	else \
-		npx electron-rebuild -f -w better-sqlite3 || true; \
-	fi
-	# Build the app and build a Docker image containing the runnable Electron app
+	@echo "Building YABGO Browser..."
 	npm run build
+	docker build -t yabgo-browser:latest .
 
 
 deploy:

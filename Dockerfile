@@ -1,63 +1,36 @@
-# ================================
-# Build Stage
-# ================================
-FROM ghcr.io/electron/build:latest AS builder
-
-# Add metadata labels
-LABEL org.opencontainers.image.title="YABGO Browser" \
-    org.opencontainers.image.description="Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant and MCP integration" \
-    org.opencontainers.image.vendor="Codesapien Network" \
-    org.opencontainers.image.authors="Codesapien Network <yilmaz@codesapien.net>" \
-    org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.source="https://github.com/codesapienbe/yabgo-browser"
-
-ENV DEBIAN_FRONTEND=noninteractive \
-    NODE_ENV=production
+# Build stage
+FROM node:18-slim AS builder
 
 # Install build dependencies
-USER root
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup non-root user with proper permissions
-RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash appuser
-RUN mkdir -p /home/appuser/.npm /home/appuser/.cache /app && \
-    chown -R appuser:appuser /home/appuser /app
-
-USER appuser
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY --chown=appuser:appuser package*.json ./
+# Copy package files
+COPY package*.json ./
 
-# Install dependencies (including devDeps for build)
-RUN npm ci --no-audit --no-fund
+# Install all dependencies (dev + prod)
+RUN npm ci
 
 # Copy source code
-COPY --chown=appuser:appuser . .
+COPY . .
 
-# Build application
+# Build the application
 RUN npm run build:docker
 
-# ================================
-# Runtime Stage
-# ================================
-FROM node:18-slim
+# Runtime stage - minimal Debian-based
+FROM debian:bullseye-slim
 
-# Add runtime metadata
-LABEL org.opencontainers.image.title="YABGO Browser Runtime" \
-    org.opencontainers.image.description="Runtime container for YABGO Browser" \
-    org.opencontainers.image.version="1.1.2"
-
-ENV DEBIAN_FRONTEND=noninteractive \
-    NODE_ENV=production \
-    ELECTRON_DISABLE_SECURITY_WARNINGS=true
-
-# Install minimal runtime dependencies for Electron
-USER root
+# Install Node.js and minimal runtime dependencies for Electron
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y --no-install-recommends \
+    nodejs \
     libgtk-3-0 \
     libnotify4 \
     libnss3 \
@@ -75,42 +48,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libatk1.0-0 \
     libcairo2 \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for runtime
-RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /app appuser
-
-# Copy built application from builder stage
-COPY --from=builder --chown=appuser:appuser /app/dist /app/dist
-COPY --from=builder --chown=appuser:appuser /app/node_modules /app/node_modules
-COPY --from=builder --chown=appuser:appuser /app/package.json /app/package.json
-
-# Install only production dependencies in runtime (including Electron)
-USER appuser
-RUN npm ci --only=production --no-audit --no-fund
-
-# Set proper permissions
-USER root
-RUN chown -R appuser:appuser /app
-
-USER appuser
 WORKDIR /app
 
-# Health check for Electron app (checks if process is running)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD pgrep -f electron || exit 1
+# Copy built application and all node_modules from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
 
-# Default command with security flags
-CMD ["npx", "electron", \
-    "--no-sandbox", \
-    "--disable-dev-shm-usage", \
-    "--disable-accelerated-2d-canvas", \
-    "--no-first-run", \
-    "--disable-background-timer-throttling", \
-    "--disable-renderer-backgrounding", \
-    "--disable-backgrounding-occluded-windows", \
-    "."]
+# Create app user for security
+RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /app appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Run the app
+CMD ["npx", "electron", ".", "--no-sandbox"]
 
 
