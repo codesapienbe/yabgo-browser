@@ -30,8 +30,7 @@ RUN npm ci
 
 # Copy source and build
 COPY . ./
-# Switch to non-root user for build
-USER 1000
+RUN ls -la && echo "=== SRC DIR ===" && ls -la src/ && echo "=== MAIN DIR ===" && ls -la src/main/ && echo "=== MANAGERS DIR ===" && ls -la src/main/managers/ | head -10
 RUN npm run build:docker
 
 # Run electron against the built assets. The container expects the host X server
