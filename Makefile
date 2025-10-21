@@ -17,7 +17,8 @@ help:
 install:
 	npm install
 
-build:
+# Ensure install runs before build so devDependencies (typescript, webpack, etc.) are present
+build: install
 	@echo "Building YABGO Browser locally..."
 	npm run build
 	@echo "Installing production dependencies..."
@@ -32,6 +33,11 @@ test:
 clean:
 	npm run clean
 
+# Run the application in development mode (does not auto-install deps)
+# Use `make install` first if you need to install dependencies
+run:
+	@echo "Starting YABGO Browser in dev mode..."
+	npm run dev
+
 release:
 	@./scripts/release.sh || true
-

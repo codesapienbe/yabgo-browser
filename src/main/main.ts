@@ -42,6 +42,8 @@ class YabgoApp {
         try {
             await this.databaseManager.initialize();
             await this.initializeDefaultMCPServers();
+            // Ensure any enabled MCP servers saved in the database are connected on startup
+            await this.connectEnabledMCPServers();
             this.setupEventListeners();
             this.logger.info('YABGO Browser initialized successfully');
         } catch (error) {
@@ -71,6 +73,55 @@ class YabgoApp {
         } catch (error) {
             this.logger.error('Failed to initialize default MCP servers:', error);
             // Don't throw - this is not critical for app startup
+        }
+    }
+
+    /**
+     * Connect to saved MCP servers that are marked enabled in the database.
+     * Normalizes missing fields and attempts to connect each server. Failures are logged
+     * but do not block app startup.
+     */
+    private async connectEnabledMCPServers(): Promise<void> {
+        try {
+            const saved = this.databaseManager.getMCPServers();
+            if (!saved || saved.length === 0) return;
+
+            this.logger.info(`Attempting to connect to ${saved.length} saved MCP server(s)`);
+
+            for (const s of saved) {
+                try {
+                    // Normalize fields that may be missing from older DB entries
+                    const cfg = {
+                        ...s,
+                        supervise: (s as any).supervise ?? false,
+                        cwd: (s as any).cwd ?? undefined,
+                        env: (s as any).env ?? undefined,
+                        args: (s as any).args ?? undefined,
+                    };
+
+                    if (!cfg.enabled) {
+                        this.logger.debug(`Skipping disabled MCP server on startup: ${cfg.name}`);
+                        continue;
+                    }
+
+                    const ok = await this.mcpClientManager.connectToServer(cfg);
+                    if (ok) {
+                        // Persist any normalized fields back to DB (non-destructive)
+                        try {
+                            this.databaseManager.saveMCPServer(cfg);
+                        } catch (err) {
+                            this.logger.warn('Failed to persist normalized MCP server config:', err);
+                        }
+                        this.logger.info(`Connected to MCP server on startup: ${cfg.name}`);
+                    } else {
+                        this.logger.warn(`Failed to connect to MCP server on startup: ${cfg.name}`);
+                    }
+                } catch (err) {
+                    this.logger.error('Error while connecting saved MCP server:', err);
+                }
+            }
+        } catch (err) {
+            this.logger.error('Failed to connect enabled MCP servers on startup:', err);
         }
     }
 
