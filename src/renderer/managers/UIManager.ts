@@ -17,6 +17,8 @@ export class UIManager extends EventEmitter {
     private isLoading: boolean = false;
     private isSearchMode: boolean = false;
     private scrollTimeout: number | null = null;
+    private typingTimeout: number | null = null;
+    private typingInterval: number | null = null;
     private logger: Logger;
     private inputContainerCopy: HTMLElement | null = null; // Added for hiding/showing
 
@@ -375,10 +377,14 @@ export class UIManager extends EventEmitter {
         this.assistantResponse.onclick = () => this.hideAssistantResponse();
 
         if (response.type === 'info') {
-            // For MCP responses, use pre-formatted text with better styling
+            // For MCP responses, use animated typing effect
             const isMCP = response.message.includes('✓ Tool executed') || response.message.includes('✗ Tool execution');
-            const cssClass = isMCP ? 'mcp-response' : 'info-message';
-            this.assistantResponse.innerHTML = `<div class="${cssClass}">${response.message}</div>`;
+            const cssClass = isMCP ? 'mcp-response animated' : 'info-message';
+            this.assistantResponse.innerHTML = `<div class="${cssClass}" id="animatedText">${response.message}</div>`;
+
+            if (isMCP) {
+                this.animateTyping(response.message);
+            }
         } else if (response.type === 'results') {
             const title = document.createElement('h3');
             title.textContent = response.title;
@@ -549,11 +555,52 @@ export class UIManager extends EventEmitter {
     }
 
     /**
+     * Animate typing effect for MCP responses
+     */
+    private animateTyping(fullText: string): void {
+        const animatedElement = document.getElementById('animatedText');
+        if (!animatedElement) return;
+
+        // Clear any existing animation
+        if (this.typingTimeout) {
+            clearTimeout(this.typingTimeout);
+        }
+        if (this.typingInterval) {
+            clearInterval(this.typingInterval);
+        }
+
+        animatedElement.textContent = '';
+        animatedElement.classList.add('typing');
+
+        let currentIndex = 0;
+        const typingSpeed = 15; // milliseconds per character
+
+        this.typingInterval = window.setInterval(() => {
+            if (currentIndex < fullText.length) {
+                animatedElement.textContent = fullText.substring(0, currentIndex + 1);
+                currentIndex++;
+            } else {
+                // Animation complete
+                clearInterval(this.typingInterval!);
+                this.typingInterval = null;
+                animatedElement.classList.remove('typing');
+                animatedElement.classList.add('typing-complete');
+            }
+        }, typingSpeed);
+    }
+
+    /**
      * Cleanup resources
      */
     public cleanup(): void {
         if (this.scrollTimeout) {
             clearTimeout(this.scrollTimeout);
+        }
+        if (this.typingTimeout) {
+            clearTimeout(this.typingTimeout);
+        }
+        if (this.typingInterval) {
+            clearInterval(this.typingInterval);
         }
 
         this.logger.info('UI manager cleanup completed');
