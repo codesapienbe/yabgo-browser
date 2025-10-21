@@ -2,4 +2,6 @@
 set -euo pipefail
 
 echo "Running tests..."
-npx jest
+# Ensure we're in the project root directory
+cd "$(dirname "$0")/.."
+npm exec jest
