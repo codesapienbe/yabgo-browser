@@ -485,4 +485,4 @@ Every contribution helps make YABGO better! 🎉
 ---
 
 **Last Updated**: October 2025  
-**Built with** ❤️ **by the YABGO Team**
+**Built with** ❤️ **by the Codesapien Network**

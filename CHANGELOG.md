@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.1] - 2025-10-18
+## [0.0.1] - 2025-10-21
+
+### Added
+- 🚀 **Initial Release**: YABGO Browser v0.0.1
+- 🎯 **MCP Integration**: Full Model Context Protocol support with animated responses
+- ✋ **Gesture Controls**: Swipe navigation and scroll gestures
+- 🤖 **AI Assistant**: Built-in assistant with MCP tool execution
+- 🎨 **Glassmorphic UI**: Modern glassmorphic design with smooth animations
+- 📁 **Default MCP Servers**: Filesystem, Memory, Brave Search, Everything, Starter, SequentialThinking
+- 🎭 **Typing Animation**: Elegant character-by-character typing for MCP responses
+- 🏗️ **Build System**: Simplified make-based build system
+
+### Technical Features
+- TypeScript compilation with webpack bundling
+- Electron-based desktop application
+- MCP client with tool discovery and execution
+- Gesture recognition system
+- Markdown rendering support
+- Responsive glassmorphic UI
 
 ### Added
 - 🎁 **Default MCP Servers**: 5 pre-configured MCP servers automatically added on first run
@@ -49,8 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced `main.ts` with `initializeDefaultMCPServers()` method
 - Extended `package.json` build configuration for all platforms
 - Created Snap, Flatpak, and desktop integration files
-
-## [1.1.0] - 2025-10-17
 
 ### Added
 - 🔧 **MCP (Model Context Protocol) Integration**
@@ -94,8 +110,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain restriction enforcement
 - No data shared without explicit consent
 - Secure IPC communication for MCP operations
-
-## [1.0.0] - 2024-12-XX
 
 ### Added
 - Initial stable release
