@@ -1,13 +1,10 @@
-.PHONY: run build test clean install release help
+.PHONY: build test clean install release help
 
 help:
 	@echo "YABGO Browser - Available Make Targets"
 	@echo ""
-	@echo "Docker Deployment:"
-	@echo "  make run          	- Build Docker image and run app in container"
-	@echo ""
 	@echo "Building:"
-	@echo "  make build        	- Build distribution artifacts and Docker image (AppImage on Linux, installer on Windows)"
+	@echo "  make build        	- Build the application locally"
 	@echo "  make sign   		- Sign AppImage with GPG"
 	@echo "  make release      	- Create release distribution"
 	@echo ""
@@ -21,97 +18,13 @@ install:
 	npm install
 
 build:
-	@echo "Building YABGO Browser..."
+	@echo "Building YABGO Browser locally..."
 	npm run build
-	docker build -f docker/Dockerfile -t yabgo-browser:latest .
-
-
-run: build
-	@echo "Running YABGo Browser..."
-	# Single entrypoint: 'make run' (host X) or 'make run vnc' (use VNC/noVNC)
-	if echo "$(MAKECMDGOALS)" | grep -q "vnc"; then \
-		@echo "Starting yabgo-browser with noVNC/VNC exposed..."; \
-		docker run --rm -p 5800:5800 -p 5900:5900 --name yabgo-browser yabgo-browser:latest; \
-	else \
-		@echo "Running yabgo-browser on host X (no VNC; mounts X11, audio and DBus automatically)"; \
-		if [ -z "${DISPLAY}" ]; then \
-			echo "ERROR: DISPLAY is not set on the host. Export DISPLAY (e.g. export DISPLAY=\":0\") to run on host X."; \
-			exit 1; \
-		fi; \
-		# XAUTH (default to ${HOME}/.Xauthority)
-		XAUTH_PATH="${XAUTH:-${HOME}/.Xauthority}"; \
-		XAUTH_ARGS=""; \
-		if [ -f "$$XAUTH_PATH" ]; then \
-			echo "Using XAUTH: $$XAUTH_PATH"; \
-			XAUTH_ARGS="-e XAUTHORITY=$$XAUTH_PATH -v $$XAUTH_PATH:$$XAUTH_PATH:ro"; \
-		else \
-			echo "No XAUTH file found at $$XAUTH_PATH; you may need to run 'xhost +local:root' before running."; \
-			XAUTH_ARGS=""; \
-		fi; \
-		# Pulse audio socket (per-user)
-		PULSE_SOCKET="/run/user/$$(id -u)/pulse/native"; \
-		PULSE_ARGS=""; \
-		if [ -S "$$PULSE_SOCKET" ]; then \
-			PULSE_ARGS="-v $$PULSE_SOCKET:$$PULSE_SOCKET:ro -e PULSE_SERVER=unix:$$PULSE_SOCKET"; \
-		fi; \
-		# DBus socket (optional)
-		DBUS_ARGS=""; \
-		if [ -S "/run/dbus/system_bus_socket" ]; then \
-			DBUS_ARGS="-v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro"; \
-		fi; \
-		# Run container with host X and devices mounted so GUI appears on host display
-		docker run --rm $${XAUTH_ARGS} -e DISPLAY=$$DISPLAY -e HOME=/tmp -e XDG_CACHE_HOME=/tmp/.cache -e XDG_CONFIG_HOME=/tmp/.config -v /tmp/.X11-unix:/tmp/.X11-unix $${PULSE_ARGS} $${DBUS_ARGS} \
-			--device /dev/snd --device /dev/dri --shm-size=1g --user $$(id -u):$$(id -g) --network host \
-			yabgo-browser:latest; \
-	fi
-
-
-deploy:
-	@echo "Deploy: use local image 'yabgo-browser:latest'...";
-	$(MAKE) build;
-	@echo "Deploy step complete.";
+	@echo "Installing production dependencies..."
+	npm ci --only=production
 
 sign:
 	npm run build:sign
-
-run:
-	@echo "Running YABGo Browser in Docker..."
-	# Run the application in Docker with X11, XAUTH, audio and GPU mounts
-	@echo "Starting app in Docker (ensure X is forwarded):";
-	# Validate DISPLAY
-	if [ -z "${DISPLAY}" ]; then \
-		echo "ERROR: DISPLAY is not set on the host. You need an X server available to run the GUI inside Docker."; \
-		echo "If you want to run locally use 'make run' (without DOCKER=1). To run in docker ensure DISPLAY is exported, e.g. export DISPLAY=":0""; \
-		exit 1; \
-	fi; \
-
-	# Allow override of XAUTH path via environment variable; default to ${HOME}/.Xauthority
-	XAUTH_PATH="${XAUTH:-${HOME}/.Xauthority}"; \
-	XAUTH_ARGS=""; \
-	if [ -f "$$XAUTH_PATH" ]; then \
-		echo "Using XAUTH: $$XAUTH_PATH"; \
-		XAUTH_ARGS="-e XAUTHORITY=$$XAUTH_PATH -v $$XAUTH_PATH:$$XAUTH_PATH:ro"; \
-	else \
-		echo "No XAUTH file found at $$XAUTH_PATH; you can either run 'xhost +local:root' before running or set XAUTH env to point to your .Xauthority file."; \
-		XAUTH_ARGS=""; \
-	fi; \
-
-	# Pulse audio socket (per-user)
-	PULSE_SOCKET="/run/user/$$(id -u)/pulse/native"; \
-	PULSE_ARGS=""; \
-	if [ -S "$$PULSE_SOCKET" ]; then \
-		PULSE_ARGS="-v $$PULSE_SOCKET:$$PULSE_SOCKET:ro -e PULSE_SERVER=unix:$$PULSE_SOCKET"; \
-	fi; \
-
-	# DBus socket (optional)
-	DBUS_ARGS=""; \
-	if [ -S "/run/dbus/system_bus_socket" ]; then \
-		DBUS_ARGS="-v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro"; \
-	fi; \
-
-	docker run --rm $${XAUTH_ARGS} -e DISPLAY=$$DISPLAY -e HOME=/tmp -e XDG_CACHE_HOME=/tmp/.cache -e XDG_CONFIG_HOME=/tmp/.config -v /tmp/.X11-unix:/tmp/.X11-unix $${PULSE_ARGS} $${DBUS_ARGS} \
-		--device /dev/snd --device /dev/dri --shm-size=1g --user $$(id -u):$$(id -g) --network host \
-		yabgo-browser:latest
 
 test:
 	npm run test

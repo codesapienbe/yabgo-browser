@@ -2,4 +2,4 @@
 set -euo pipefail
 
 echo "Running tests..."
-jest
+npx jest
