@@ -4,15 +4,14 @@
   "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant and MCP integration",
   "main": "dist/main/main.js",
   "scripts": {
-    "build": "npm run clean && npx tsc -p tsconfig.json && npx webpack --mode production && npm run copy:assets",
-    "build:docker": "npm run build",
+    "build": "bash scripts/build.sh",
     "build:store": "bash scripts/build-store.sh",
     "build:sign": "bash scripts/sign-appimage.sh",
-    "start": "npx electron .",
-    "dev": "npm run build && npm start",
-    "test": "jest",
-    "clean": "rm -rf dist release",
-    "copy:assets": "cp src/renderer/index.html dist/ && cp src/renderer/styles.css dist/ && cp -r assets dist/assets || true"
+    "start": "bash scripts/start.sh",
+    "dev": "bash scripts/dev.sh",
+    "test": "bash scripts/test.sh",
+    "clean": "bash scripts/clean.sh",
+    "copy:assets": "bash scripts/copy-assets.sh"
   },
   "keywords": [
     "electron",
