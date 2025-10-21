@@ -31,16 +31,67 @@ class RendererMain {
     }
 }
 
+// Utility: fade out and remove splash element (returns when removed or immediately if no element)
+async function fadeOutSplash(splashEl: HTMLElement | null, timeout = 700): Promise<void> {
+    if (!splashEl) return;
+
+    try {
+        // set accessible state and start fade
+        splashEl.setAttribute('aria-hidden', 'true');
+        splashEl.classList.add('fade-out');
+
+        // Wait for the CSS transition to finish, with a safety timeout
+        await new Promise<void>((resolve) => {
+            let invoked = false;
+            const done = () => {
+                if (invoked) return;
+                invoked = true;
+                try { splashEl.remove(); } catch { /* ignore */ }
+                resolve();
+            };
+
+            // Try to listen for transitionend
+            const onTransitionEnd = (ev: TransitionEvent) => {
+                // Only resolve for opacity/transform transitions coming from the splash element
+                if (ev.target === splashEl) {
+                    splashEl.removeEventListener('transitionend', onTransitionEnd as EventListener);
+                    done();
+                }
+            };
+
+            splashEl.addEventListener('transitionend', onTransitionEnd as EventListener);
+
+            // Fallback safety timeout
+            setTimeout(() => {
+                try { splashEl.removeEventListener('transitionend', onTransitionEnd as EventListener); } catch { /* ignore */ }
+                done();
+            }, timeout);
+        });
+    } catch (e) {
+        try { splashEl.remove(); } catch { /* ignore */ }
+    }
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('[RendererMain] DOMContentLoaded event fired');
+    const splashEl = document.getElementById('splash');
     const rendererMain = new RendererMain();
 
     try {
         console.debug('[RendererMain] Starting initialization...');
         await rendererMain.initialize();
+        // Fade out splash then remove it
+        await fadeOutSplash(splashEl);
         console.debug('[RendererMain] Initialization complete');
     } catch (error) {
+        // Fade out the splash (if present) before displaying error UI so users see a smooth transition
+        try {
+            await fadeOutSplash(splashEl);
+        } catch (e) {
+            // ignore fade errors
+        }
+
         console.error('Failed to start YABGO Browser UI:', error);
         console.error('Error stack:', (error as Error).stack);
 

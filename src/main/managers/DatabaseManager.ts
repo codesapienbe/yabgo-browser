@@ -95,10 +95,23 @@ export class DatabaseManager {
         if (!this.persist || !this.persistPath) return;
         try {
             const arr = Array.from(this.mcpServers.values());
+            // Don't persist sensitive env fields by default.
+            const includeEnvGlobal = process.env.YABGO_PERSIST_MCP_ENV === '1' || (process.env.YABGO_PERSIST_MCP_ENV || '').toLowerCase() === 'true';
+            const sanitized = arr.map((c: any) => {
+                const copy: any = { ...c };
+                // Per-server opt-in: if server has `persistEnv: true` keep env.
+                const persistEnvPerServer = copy.persistEnv === true;
+                if (!includeEnvGlobal && !persistEnvPerServer) {
+                    delete copy.env;
+                }
+                // Don't persist the helper flag itself
+                if (copy.persistEnv !== undefined) delete copy.persistEnv;
+                return copy;
+            });
             const tmp = `${this.persistPath}.tmp`;
-            fs.writeFileSync(tmp, JSON.stringify(arr, null, 2), { mode: 0o600 });
+            fs.writeFileSync(tmp, JSON.stringify(sanitized, null, 2), { mode: 0o600 });
             fs.renameSync(tmp, this.persistPath);
-            this.logger.debug(`Persisted ${arr.length} MCP server(s) to disk`);
+            this.logger.debug(`Persisted ${sanitized.length} MCP server(s) to disk (env stripped by default)`);
         } catch (err) {
             this.logger.warn('Failed to persist MCP servers to disk:', err);
         }
@@ -226,6 +239,8 @@ export class DatabaseManager {
             command: config.command,
             args: config.args ?? [],
             env: config.env ?? undefined,
+            // allow per-server opt-in for persisting env vars
+            persistEnv: config.persistEnv === true,
             supervise: config.supervise ?? false,
             cwd: config.cwd ?? undefined,
             enabled: config.enabled ?? true,
