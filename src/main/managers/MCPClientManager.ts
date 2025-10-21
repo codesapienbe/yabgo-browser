@@ -223,7 +223,7 @@ export class MCPClientManager extends EventEmitter {
             const tools = response.tools || [];
 
             this.emit('tools-discovered', { serverId, tools });
-            console.log(`[MCP] Discovered ${tools.length} tools from ${serverId}`);
+            console.log(`[MCP] Discovered ${tools.length} tools from ${serverId}:`, tools.map(t => t.name));
 
             return tools;
         } catch (error) {
@@ -259,6 +259,7 @@ export class MCPClientManager extends EventEmitter {
                 timestamp: Date.now(),
             };
 
+            console.log(`[MCP] Tool call successful: ${toolCall.toolName}`, { result });
             this.emit('tool-called', { toolCall, result });
 
             return result;

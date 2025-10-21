@@ -174,14 +174,22 @@ export class AssistantManager extends EventEmitter {
             // Parse params (supports key=value or JSON)
             const params = this.parseToolParams(paramsStr);
 
-            // Call tool
+            // Call tool with timeout
             this.logger.info(`Calling MCP tool: ${serverName}.${toolName}`);
-            const result = await mcpBridge.callTool({
+            const toolCallPromise = mcpBridge.callTool({
                 serverId: server.id,
                 toolName,
                 params,
                 timestamp: Date.now(),
             });
+
+            const toolTimeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Tool call timed out after 10 seconds')), 10000)
+            );
+
+            const result = await Promise.race([toolCallPromise, toolTimeoutPromise]) as any;
+
+            console.log('[AssistantManager] Tool call result:', { success: result.success, error: result.error, hasData: !!result.data });
 
             if (result.success) {
                 return `✓ Tool executed successfully:\n\n${this.formatMCPResult(result.data)}`;
