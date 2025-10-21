@@ -222,6 +222,11 @@ export class UIManager extends EventEmitter {
      * Check if input is an assistant command
      */
     private isAssistantCommand(input: string): boolean {
+        // Check for MCP commands (start with @)
+        if (input.trim().startsWith('@')) {
+            return true;
+        }
+
         const lower = input.toLowerCase();
         const assistantKeywords = ['find', 'search', 'recent', 'clear', 'history', 'visited', 'stats', 'statistics'];
         return assistantKeywords.some(keyword => lower.includes(keyword));
