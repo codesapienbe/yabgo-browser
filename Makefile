@@ -33,9 +33,8 @@ test:
 clean:
 	npm run clean
 
-# Run the application in development mode (does not auto-install deps)
-# Use `make install` first if you need to install dependencies
-run:
+# Run the application in development mode. Ensure devDependencies are installed first
+run: install
 	@echo "Starting YABGO Browser in dev mode..."
 	npm run dev
 

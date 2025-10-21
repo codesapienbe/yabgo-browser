@@ -52,7 +52,7 @@ Execute MCP tools using simple `@` commands:
 - **MCPContextManager**: Filters browsing context based on permissions
 - **MCPSettingsManager**: Handles UI for server configuration
 - **IPC Bridge**: 9 communication channels between main and renderer processes
-- **Database Layer**: SQLite persistence for servers and tool history
+- **Database Layer**: In-memory persistence for servers and tool history (no native SQLite dependency)
 
 ### Bundle Size
 - Main bundle increase: **+10.4 KiB** (minimal overhead for full MCP stack)
@@ -116,9 +116,8 @@ No breaking changes! MCP integration is purely additive. Your existing:
 All continue to work exactly as before.
 
 ### Database Schema
-Two new tables added automatically on first launch:
-- `mcp_servers` - Server configurations
-- `mcp_tool_history` - Tool execution history
+Storage model
+Data for MCP servers and tool history are kept in-memory at runtime. There is no on-disk SQLite schema for these items in the simplified in-memory configuration. Server configurations and recent tool history are maintained during the application's runtime and cleared when the app exits (see documentation for persistence options if you need durable storage).
 
 ## 🐛 Known Issues
 
@@ -138,7 +137,6 @@ None at release time.
 - **Model Context Protocol**: [modelcontextprotocol.io](https://modelcontextprotocol.io)
 - **Electron**: Cross-platform desktop framework
 - **TypeScript**: Type-safe development
-- **better-sqlite3**: Fast SQLite database
 
 ## 📦 Distribution
 
@@ -169,4 +167,3 @@ MIT License - See `LICENSE` file
 ---
 
 **Happy browsing with MCP! 🚀**
-

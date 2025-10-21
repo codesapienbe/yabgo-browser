@@ -1,335 +1,246 @@
-import * as path from 'path';
-import { app } from 'electron';
 import { PageMetadata, HistorySearchOptions } from '../../shared/types/DataTypes';
 import { Logger } from '../../shared/utils/Logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import { app } from 'electron';
 
 /**
- * Manages SQLite database operations for browsing history and metadata
+ * Lightweight in-memory DatabaseManager with optional file-based persistence for MCP servers.
+ * Replaces the SQLite-backed implementation with memory-only storage by default.
+ * When the environment variable `YABGO_PERSIST_MCP_SERVERS` is set to '1' or 'true',
+ * the manager will load and persist `mcp_servers.json` in the Electron userData directory.
+ * Keeps the same public API so the rest of the app can use it without changes.
  */
 export class DatabaseManager {
-    private db: any | null = null;
     private logger: Logger;
-    private readonly dbPath: string;
+    private pages: Map<string, PageMetadata> = new Map();
+    private mcpServers: Map<string, any> = new Map();
+    private mcpToolHistory: Array<{ server_id: string; tool_name: string; params: any; result: any; timestamp: number }> = [];
+    private persist: boolean = false;
+    private persistPath: string | null = null;
 
     constructor() {
         this.logger = new Logger('DatabaseManager');
-        this.dbPath = path.join(app.getPath('userData'), 'yabgo_history.db');
+
+        // Optional persistence is opt-in via environment variable
+        const envVal = process.env.YABGO_PERSIST_MCP_SERVERS;
+        this.persist = envVal === '1' || (envVal || '').toLowerCase() === 'true';
+        if (this.persist) {
+            try {
+                const userData = app.getPath('userData');
+                this.persistPath = path.join(userData, 'mcp_servers.json');
+            } catch (err) {
+                this.logger.warn('Failed to determine userData path for MCP persistence; disabling persistence', err);
+                this.persist = false;
+                this.persistPath = null;
+            }
+        }
     }
 
     /**
-     * Initialize database connection and create tables
+     * Initialize (load persisted servers if enabled)
      */
     public async initialize(): Promise<void> {
-        try {
-            try {
-                // Try to load native better-sqlite3 at runtime
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const BetterSqlite3 = require('better-sqlite3');
-                this.db = new BetterSqlite3(this.dbPath);
-            } catch (err) {
-                this.logger.error('Failed to initialize native better-sqlite3; initialization will abort.', err);
-                const suggestion = `\nSuggested fixes:\n 1) Ensure dependencies are installed: rm -rf node_modules && npm ci\n 2) Rebuild native modules for Electron: npx electron-rebuild -f -w better-sqlite3\n 3) Alternatively try: npm rebuild better-sqlite3 --update-binary\n 4) If packaging, rely on electron-builder (it rebuilds natives for target electron)\n`;
-                throw new Error('native better-sqlite3 is required but could not be loaded: ' + String(err) + suggestion);
-            }
+        // No native modules or file DB to initialize. Keep parity with the previous API.
+        if (this.persist && this.persistPath) {
+            this.loadPersistedServers();
+        }
+        this.logger.info('Initialized in-memory database (no persistent storage)');
+    }
 
-            this.createTables();
-            this.logger.info(`Database initialized at: ${this.dbPath}`);
-        } catch (error) {
-            this.logger.error('Failed to initialize database:', error);
-            throw error;
+    private loadPersistedServers(): void {
+        if (!this.persistPath) return;
+        try {
+            if (!fs.existsSync(this.persistPath)) return;
+            const raw = fs.readFileSync(this.persistPath, 'utf8');
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                for (const s of arr) {
+                    if (s && s.id) this.mcpServers.set(s.id, s);
+                }
+                this.logger.info(`Loaded ${this.mcpServers.size} persisted MCP server(s) from disk`);
+            }
+        } catch (err) {
+            this.logger.warn('Failed to load persisted MCP servers:', err);
+        }
+    }
+
+    private persistServersToDisk(): void {
+        if (!this.persist || !this.persistPath) return;
+        try {
+            const arr = Array.from(this.mcpServers.values());
+            const tmp = `${this.persistPath}.tmp`;
+            fs.writeFileSync(tmp, JSON.stringify(arr, null, 2), { mode: 0o600 });
+            fs.renameSync(tmp, this.persistPath);
+            this.logger.debug(`Persisted ${arr.length} MCP server(s) to disk`);
+        } catch (err) {
+            this.logger.warn('Failed to persist MCP servers to disk:', err);
         }
     }
 
     /**
-     * Create database tables
-     */
-    private createTables(): void {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const createTableSQL = `
-            CREATE TABLE IF NOT EXISTS page_metadata (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                url TEXT UNIQUE NOT NULL,
-                title TEXT NOT NULL,
-                description TEXT,
-                keywords TEXT,
-                content_snippet TEXT NOT NULL,
-                visit_timestamp TEXT NOT NULL,
-                visit_count INTEGER DEFAULT 1,
-                favicon_url TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_url ON page_metadata(url);
-            CREATE INDEX IF NOT EXISTS idx_timestamp ON page_metadata(visit_timestamp);
-            CREATE INDEX IF NOT EXISTS idx_visit_count ON page_metadata(visit_count);
-            CREATE INDEX IF NOT EXISTS idx_title ON page_metadata(title);
-        `;
-
-        this.db.exec(createTableSQL);
-        this.logger.info('Database tables created successfully');
-        // Initialize MCP tables for Phase 1
-        this.initializeMCPTables();
-    }
-
-    private initializeMCPTables(): void {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const mcpSQL = `
-            CREATE TABLE IF NOT EXISTS mcp_servers (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                config TEXT NOT NULL,
-                created_at INTEGER NOT NULL,
-                last_used INTEGER
-            );
-
-            CREATE TABLE IF NOT EXISTS mcp_tool_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                server_id TEXT NOT NULL,
-                tool_name TEXT NOT NULL,
-                params TEXT,
-                result TEXT,
-                timestamp INTEGER NOT NULL,
-                FOREIGN KEY(server_id) REFERENCES mcp_servers(id)
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_tool_history_server 
-              ON mcp_tool_history(server_id);
-            CREATE INDEX IF NOT EXISTS idx_tool_history_timestamp 
-              ON mcp_tool_history(timestamp);
-        `;
-
-        this.db.exec(mcpSQL);
-        this.logger.info('MCP tables created successfully');
-        // Ensure supervise and cwd fields exist in stored configs (backfill)
-        try {
-            const rows = this.db.prepare('SELECT id, config FROM mcp_servers').all();
-            const updateStmt = this.db.prepare(`INSERT OR REPLACE INTO mcp_servers (id, name, config, created_at, last_used) VALUES (?, ?, ?, ?, ?)`);
-            for (const row of rows) {
-                const cfg = JSON.parse(row.config);
-                if (cfg.supervise === undefined || cfg.cwd === undefined) {
-                    cfg.supervise = cfg.supervise === undefined ? false : cfg.supervise;
-                    cfg.cwd = cfg.cwd === undefined ? undefined : cfg.cwd;
-                    updateStmt.run(row.id, cfg.name, JSON.stringify(cfg), cfg.createdAt || Date.now(), cfg.lastUsed || null);
-                }
-            }
-        } catch (err) {
-            // ignore backfill errors
-        }
-
-        // Ensure default servers are present with supervise:false and no cwd by default
-        try {
-            const existing = this.getMCPServers();
-            const defaultServers = require('../..//src/shared/utils/DefaultMCPServers').DEFAULT_MCP_SERVERS;
-            const shouldInit = existing.length === 0;
-            if (shouldInit) {
-                const createDefaultServerConfig = require('../..//src/shared/utils/DefaultMCPServers').createDefaultServerConfig;
-                for (const s of defaultServers) {
-                    const cfg = createDefaultServerConfig(s);
-                    // ensure supervise/cwd defaults
-                    cfg.supervise = s.supervise ?? false;
-                    cfg.cwd = s.cwd ?? undefined;
-                    this.saveMCPServer(cfg);
-                }
-            }
-        } catch (err) {
-            // ignore
-        }
-    }
-
-    /**
-     * Insert or update page metadata
+     * Insert or update page metadata. Uses URL as unique key.
      */
     public insertOrUpdateMetadata(metadata: PageMetadata): void {
-        if (!this.db) throw new Error('Database not initialized');
+        const nowStr = new Date().toISOString();
+        const existing = this.pages.get(metadata.url);
+        if (existing) {
+            // Update fields and bump visit_count
+            existing.title = metadata.title || existing.title;
+            existing.description = metadata.description ?? existing.description;
+            existing.keywords = metadata.keywords ?? existing.keywords;
+            existing.content_snippet = metadata.content_snippet || existing.content_snippet;
+            existing.visit_timestamp = metadata.visit_timestamp || nowStr;
+            existing.visit_count = (existing.visit_count || 0) + 1;
+            existing.favicon_url = metadata.favicon_url || existing.favicon_url;
+            // keep createdAt if present
+            this.pages.set(metadata.url, existing);
+        } else {
+            const toSave: PageMetadata = {
+                url: metadata.url,
+                title: metadata.title || 'Untitled',
+                description: metadata.description || '',
+                keywords: metadata.keywords || '',
+                content_snippet: metadata.content_snippet || '',
+                visit_timestamp: metadata.visit_timestamp || nowStr,
+                visit_count: metadata.visit_count || 1,
+                favicon_url: metadata.favicon_url || '',
+            } as PageMetadata;
 
-        const stmt = this.db.prepare(`
-            INSERT INTO page_metadata 
-            (url, title, description, keywords, content_snippet, visit_timestamp, visit_count, favicon_url, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP) 
-            ON CONFLICT(url) DO UPDATE SET 
-                title = excluded.title,
-                description = excluded.description,
-                keywords = excluded.keywords,
-                content_snippet = excluded.content_snippet,
-                visit_timestamp = excluded.visit_timestamp,
-                visit_count = visit_count + 1,
-                favicon_url = excluded.favicon_url,
-                updated_at = CURRENT_TIMESTAMP
-        `);
-
-        stmt.run(
-            metadata.url,
-            metadata.title,
-            metadata.description || '',
-            metadata.keywords || '',
-            metadata.content_snippet,
-            metadata.visit_timestamp,
-            metadata.favicon_url || ''
-        );
+            this.pages.set(metadata.url, toSave);
+        }
 
         this.logger.debug(`Metadata saved for URL: ${metadata.url}`);
     }
 
     /**
-     * Search pages by query
+     * Search pages by query (simple substring match in a few fields)
      */
     public searchPages(query: string, options: HistorySearchOptions = {}): PageMetadata[] {
-        if (!this.db) throw new Error('Database not initialized');
-
         const limit = options.limit || 10;
-        const searchPattern = `%${query}%`;
+        const q = (query || '').toLowerCase();
 
-        const stmt = this.db.prepare(`
-            SELECT * FROM page_metadata 
-            WHERE title LIKE ? OR description LIKE ? OR content_snippet LIKE ? OR url LIKE ? 
-            ORDER BY visit_count DESC, visit_timestamp DESC 
-            LIMIT ?
-        `);
+        const results = Array.from(this.pages.values()).filter(p => {
+            return (
+                (p.title || '').toLowerCase().includes(q) ||
+                (p.description || '').toLowerCase().includes(q) ||
+                (p.content_snippet || '').toLowerCase().includes(q) ||
+                (p.url || '').toLowerCase().includes(q)
+            );
+        });
 
-        const results = stmt.all(searchPattern, searchPattern, searchPattern, searchPattern, limit) as PageMetadata[];
-        this.logger.debug(`Found ${results.length} results for query: ${query}`);
+        results.sort((a, b) => {
+            const byCount = (b.visit_count || 0) - (a.visit_count || 0);
+            if (byCount !== 0) return byCount;
+            const ta = Date.parse(a.visit_timestamp || '') || 0;
+            const tb = Date.parse(b.visit_timestamp || '') || 0;
+            return tb - ta;
+        });
 
-        return results;
+        this.logger.debug(`Found ${Math.min(results.length, limit)} results for query: ${query}`);
+        return results.slice(0, limit);
     }
 
     /**
      * Get recent pages
      */
     public getRecentPages(limit: number = 10): PageMetadata[] {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const stmt = this.db.prepare(`
-            SELECT * FROM page_metadata 
-            ORDER BY visit_timestamp DESC 
-            LIMIT ?
-        `);
-
-        const results = stmt.all(limit) as PageMetadata[];
-        this.logger.debug(`Retrieved ${results.length} recent pages`);
-
-        return results;
+        const results = Array.from(this.pages.values()).sort((a, b) => {
+            const ta = Date.parse(a.visit_timestamp || '') || 0;
+            const tb = Date.parse(b.visit_timestamp || '') || 0;
+            return tb - ta;
+        });
+        this.logger.debug(`Retrieved ${Math.min(results.length, limit)} recent pages`);
+        return results.slice(0, limit);
     }
 
     /**
      * Get most visited pages
      */
     public getMostVisitedPages(limit: number = 10): PageMetadata[] {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const stmt = this.db.prepare(`
-            SELECT * FROM page_metadata 
-            ORDER BY visit_count DESC, visit_timestamp DESC 
-            LIMIT ?
-        `);
-
-        const results = stmt.all(limit) as PageMetadata[];
-        this.logger.debug(`Retrieved ${results.length} most visited pages`);
-
-        return results;
+        const results = Array.from(this.pages.values()).sort((a, b) => {
+            const byCount = (b.visit_count || 0) - (a.visit_count || 0);
+            if (byCount !== 0) return byCount;
+            const ta = Date.parse(a.visit_timestamp || '') || 0;
+            const tb = Date.parse(b.visit_timestamp || '') || 0;
+            return tb - ta;
+        });
+        this.logger.debug(`Retrieved ${Math.min(results.length, limit)} most visited pages`);
+        return results.slice(0, limit);
     }
 
     /**
      * Clear all history
      */
     public clearHistory(): void {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const stmt = this.db.prepare('DELETE FROM page_metadata');
-        const result = stmt.run();
-
-        this.logger.info(`Cleared ${result.changes} history entries`);
+        const count = this.pages.size;
+        this.pages.clear();
+        this.logger.info(`Cleared ${count} history entries`);
     }
 
-    // MCP-related DB methods (Phase 1)
+    // MCP-related in-memory methods
     public saveMCPServer(config: any): void {
-        if (!this.db) throw new Error('Database not initialized');
+        // Ensure minimal default fields
+        const cfg = {
+            id: config.id,
+            name: config.name,
+            command: config.command,
+            args: config.args ?? [],
+            env: config.env ?? undefined,
+            supervise: config.supervise ?? false,
+            cwd: config.cwd ?? undefined,
+            enabled: config.enabled ?? true,
+            permissions: config.permissions ?? (config.permissions ?? {}),
+            createdAt: config.createdAt ?? Date.now(),
+            lastUsed: config.lastUsed ?? null,
+        };
 
-        const stmt = this.db.prepare(`
-            INSERT OR REPLACE INTO mcp_servers (id, name, config, created_at, last_used)
-            VALUES (?, ?, ?, ?, ?)
-        `);
-
-        stmt.run(
-            config.id,
-            config.name,
-            JSON.stringify(config),
-            config.createdAt,
-            config.lastUsed || null
-        );
+        this.mcpServers.set(cfg.id, cfg);
+        // Persist to disk when enabled
+        if (this.persist) this.persistServersToDisk();
     }
 
     public getMCPServers(): any[] {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const rows = this.db.prepare('SELECT config FROM mcp_servers WHERE 1=1').all();
-        return rows.map((row: any) => JSON.parse(row.config));
+        return Array.from(this.mcpServers.values());
     }
 
     public deleteMCPServer(serverId: string): void {
-        if (!this.db) throw new Error('Database not initialized');
-
-        this.db.prepare('DELETE FROM mcp_servers WHERE id = ?').run(serverId);
-        this.db.prepare('DELETE FROM mcp_tool_history WHERE server_id = ?').run(serverId);
+        this.mcpServers.delete(serverId);
+        this.mcpToolHistory = this.mcpToolHistory.filter(h => h.server_id !== serverId);
+        if (this.persist) this.persistServersToDisk();
     }
 
     public saveMCPToolCall(serverId: string, toolCall: any, result: any): void {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const stmt = this.db.prepare(`
-            INSERT INTO mcp_tool_history (server_id, tool_name, params, result, timestamp)
-            VALUES (?, ?, ?, ?, ?)
-        `);
-
-        stmt.run(
-            serverId,
-            toolCall.toolName,
-            JSON.stringify(toolCall.params || {}),
-            JSON.stringify(result || {}),
-            toolCall.timestamp || Date.now()
-        );
+        this.mcpToolHistory.push({
+            server_id: serverId,
+            tool_name: toolCall.toolName,
+            params: toolCall.params || {},
+            result: result || {},
+            timestamp: toolCall.timestamp || Date.now(),
+        });
     }
 
     public getMCPToolHistory(serverId: string, limit: number = 50): any[] {
-        if (!this.db) throw new Error('Database not initialized');
-
-        return this.db.prepare(`
-            SELECT * FROM mcp_tool_history 
-            WHERE server_id = ? 
-            ORDER BY timestamp DESC 
-            LIMIT ?
-        `).all(serverId, limit);
+        const rows = this.mcpToolHistory.filter(h => h.server_id === serverId).sort((a, b) => b.timestamp - a.timestamp);
+        return rows.slice(0, limit);
     }
 
     /**
      * Get database statistics
      */
     public getStatistics(): { totalPages: number; totalVisits: number } {
-        if (!this.db) throw new Error('Database not initialized');
-
-        const totalPagesStmt = this.db.prepare('SELECT COUNT(*) as count FROM page_metadata');
-        const totalVisitsStmt = this.db.prepare('SELECT SUM(visit_count) as count FROM page_metadata');
-
-        const totalPages = (totalPagesStmt.get() as { count: number }).count;
-        const totalVisits = (totalVisitsStmt.get() as { count: number }).count || 0;
-
+        const totalPages = this.pages.size;
+        const totalVisits = Array.from(this.pages.values()).reduce((acc, p) => acc + (p.visit_count || 0), 0);
         return { totalPages, totalVisits };
     }
 
     /**
-     * Close database connection
+     * Close (clear in-memory store)
      */
     public close(): void {
-        if (this.db) {
-            try {
-                this.db.close();
-            } catch {
-                // ignore close errors for fallback
-            }
-            this.db = null;
-            this.logger.info('Database connection closed');
-        }
+        this.pages.clear();
+        this.mcpServers.clear();
+        this.mcpToolHistory = [];
+        this.logger.info('In-memory database cleared');
     }
 }

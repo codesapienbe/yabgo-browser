@@ -97,14 +97,32 @@ export class MCPClientManager extends EventEmitter {
             // No automatic reconnect state maintained; user toggles server to retry
 
             // Attach close/error listeners to trigger reconnection when appropriate
-            (client as any).on('close', (...args: any[]) => {
-                console.warn(`[MCP] Client closed for ${config.id}`, { args });
-                this.emit('server-disconnected', config.id);
-            });
-            (client as any).on('error', (err: any) => {
-                console.error(`[MCP] Client error for ${config.id}:`, err);
-                if (this.listenerCount('error') > 0) this.emit('error', { serverId: config.id, error: err });
-            });
+            try {
+                const anyClient = client as any;
+                if (typeof anyClient.on === 'function') {
+                    anyClient.on('close', (...args: any[]) => {
+                        console.warn(`[MCP] Client closed for ${config.id}`, { args });
+                        this.emit('server-disconnected', config.id);
+                    });
+                    anyClient.on('error', (err: any) => {
+                        console.error(`[MCP] Client error for ${config.id}:`, err);
+                        if (this.listenerCount('error') > 0) this.emit('error', { serverId: config.id, error: err });
+                    });
+                } else if (typeof anyClient.addListener === 'function') {
+                    anyClient.addListener('close', (...args: any[]) => {
+                        console.warn(`[MCP] Client closed for ${config.id}`, { args });
+                        this.emit('server-disconnected', config.id);
+                    });
+                    anyClient.addListener('error', (err: any) => {
+                        console.error(`[MCP] Client error for ${config.id}:`, err);
+                        if (this.listenerCount('error') > 0) this.emit('error', { serverId: config.id, error: err });
+                    });
+                } else {
+                    console.debug(`[MCP] Client for ${config.id} does not support event listeners`);
+                }
+            } catch (err) {
+                console.warn(`[MCP] Failed to attach client event listeners for ${config.id}:`, err);
+            }
 
             this.emit('server-connected', config.id);
             console.log(`[MCP] Successfully connected to: ${config.name}`, { serverId: config.id });
@@ -129,7 +147,11 @@ export class MCPClientManager extends EventEmitter {
         const client = this.clients.get(serverId);
         if (client) {
             try {
-                await client.close();
+                if (typeof (client as any).close === 'function') {
+                    await (client as any).close();
+                } else {
+                    console.debug(`[MCP] Client ${serverId} has no close() method; skipping close`);
+                }
             } catch (error) {
                 console.error(`[MCP] Error closing client ${serverId}:`, error);
             }
@@ -281,4 +303,3 @@ export class MCPClientManager extends EventEmitter {
         await Promise.all(disconnectPromises);
     }
 }
-

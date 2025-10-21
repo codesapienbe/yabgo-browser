@@ -2,4 +2,5 @@
 set -euo pipefail
 
 echo "Starting YABGO Browser..."
+
 npx electron .
