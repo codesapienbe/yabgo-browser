@@ -403,18 +403,32 @@ body {
 
 .no-results,
 .info-message,
-.error-message {
-    padding: 30px 20px;
-    text-align: center;
+.error-message,
+.mcp-response {
+    padding: 20px;
     font-size: 13px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
-.info-message {
+.info-message,
+.mcp-response {
     color: #34d399;
+    text-align: left;
+}
+
+.mcp-response {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .error-message {
     color: #f87171;
+    text-align: center;
 }
 
 .perplexity-info {
@@ -635,7 +649,7 @@ body {
 .splash-logo {
     font-size: 56px;
     transform-origin: center;
-    animation: logo-bounce 1400ms cubic-bezier(.2,.9,.3,1) infinite;
+    animation: logo-bounce 1400ms cubic-bezier(.2, .9, .3, 1) infinite;
 }
 
 .splash-title {

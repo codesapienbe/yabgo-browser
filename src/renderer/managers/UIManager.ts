@@ -191,22 +191,24 @@ export class UIManager extends EventEmitter {
         const input = this.unifiedInput?.value?.trim();
         if (!input) return;
 
-        // Ensure input UI is removed for all scenarios
-        this.hideInput();
-
         // Check if it's a domain
         const isDomain = URLHelper['isDomain'](input) || input.includes('://');
 
         // Check if it's an assistant command
         if (this.isAssistantCommand(input)) {
+            // For MCP commands, don't hide input - keep it visible so response can be positioned
+            if (!input.startsWith('@')) {
+                this.hideInput();
+            }
             this.emit('assistant-query', input);
         } else {
             this.showLoading();
+            this.hideInput();
             this.emit('navigate', input);
         }
 
-        // Only clear input if it's NOT a domain
-        if (this.unifiedInput && !isDomain) {
+        // Only clear input if it's NOT a domain and NOT an MCP command
+        if (this.unifiedInput && !isDomain && !input.startsWith('@')) {
             this.unifiedInput.value = '';
         }
 
@@ -369,8 +371,14 @@ export class UIManager extends EventEmitter {
         this.assistantResponse.innerHTML = '';
         this.assistantResponse.classList.add('show');
 
+        // Add click handler to dismiss response
+        this.assistantResponse.onclick = () => this.hideAssistantResponse();
+
         if (response.type === 'info') {
-            this.assistantResponse.innerHTML = `<div class="info-message">${response.message}</div>`;
+            // For MCP responses, use pre-formatted text with better styling
+            const isMCP = response.message.includes('✓ Tool executed') || response.message.includes('✗ Tool execution');
+            const cssClass = isMCP ? 'mcp-response' : 'info-message';
+            this.assistantResponse.innerHTML = `<div class="${cssClass}">${response.message}</div>`;
         } else if (response.type === 'results') {
             const title = document.createElement('h3');
             title.textContent = response.title;
