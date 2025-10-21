@@ -16,8 +16,9 @@ export class DatabaseManager {
     private pages: Map<string, PageMetadata> = new Map();
     private mcpServers: Map<string, any> = new Map();
     private mcpToolHistory: Array<{ server_id: string; tool_name: string; params: any; result: any; timestamp: number }> = [];
-    private persist: boolean = false;
-    private persistPath: string | null = null;
+    private readonly persist: boolean = false;
+    private readonly persistPath: string | null = null;
+    private readonly persistToolHistoryPath: string | null = null;
 
     constructor() {
         this.logger = new Logger('DatabaseManager');
@@ -29,10 +30,12 @@ export class DatabaseManager {
             try {
                 const userData = app.getPath('userData');
                 this.persistPath = path.join(userData, 'mcp_servers.json');
+                this.persistToolHistoryPath = path.join(userData, 'mcp_tool_history.json');
             } catch (err) {
                 this.logger.warn('Failed to determine userData path for MCP persistence; disabling persistence', err);
                 this.persist = false;
                 this.persistPath = null;
+                this.persistToolHistoryPath = null;
             }
         }
     }
@@ -44,6 +47,7 @@ export class DatabaseManager {
         // No native modules or file DB to initialize. Keep parity with the previous API.
         if (this.persist && this.persistPath) {
             this.loadPersistedServers();
+            this.loadPersistedToolHistory();
         }
         this.logger.info('Initialized in-memory database (no persistent storage)');
     }
@@ -65,6 +69,28 @@ export class DatabaseManager {
         }
     }
 
+    private loadPersistedToolHistory(): void {
+        if (!this.persistToolHistoryPath) return;
+        try {
+            if (!fs.existsSync(this.persistToolHistoryPath)) return;
+            const raw = fs.readFileSync(this.persistToolHistoryPath, 'utf8');
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                // Keep only well-formed entries
+                this.mcpToolHistory = arr.filter((h: any) => h && h.server_id && h.timestamp).map((h: any) => ({
+                    server_id: h.server_id,
+                    tool_name: h.tool_name,
+                    params: h.params || {},
+                    result: h.result || {},
+                    timestamp: h.timestamp || Date.now(),
+                }));
+                this.logger.info(`Loaded ${this.mcpToolHistory.length} persisted MCP tool history entries from disk`);
+            }
+        } catch (err) {
+            this.logger.warn('Failed to load persisted MCP tool history:', err);
+        }
+    }
+
     private persistServersToDisk(): void {
         if (!this.persist || !this.persistPath) return;
         try {
@@ -75,6 +101,19 @@ export class DatabaseManager {
             this.logger.debug(`Persisted ${arr.length} MCP server(s) to disk`);
         } catch (err) {
             this.logger.warn('Failed to persist MCP servers to disk:', err);
+        }
+    }
+
+    private persistToolHistoryToDisk(): void {
+        if (!this.persist || !this.persistToolHistoryPath) return;
+        try {
+            const arr = this.mcpToolHistory.slice();
+            const tmp = `${this.persistToolHistoryPath}.tmp`;
+            fs.writeFileSync(tmp, JSON.stringify(arr, null, 2), { mode: 0o600 });
+            fs.renameSync(tmp, this.persistToolHistoryPath);
+            this.logger.debug(`Persisted ${arr.length} MCP tool history entries to disk`);
+        } catch (err) {
+            this.logger.warn('Failed to persist MCP tool history to disk:', err);
         }
     }
 
@@ -208,6 +247,7 @@ export class DatabaseManager {
         this.mcpServers.delete(serverId);
         this.mcpToolHistory = this.mcpToolHistory.filter(h => h.server_id !== serverId);
         if (this.persist) this.persistServersToDisk();
+        if (this.persist) this.persistToolHistoryToDisk();
     }
 
     public saveMCPToolCall(serverId: string, toolCall: any, result: any): void {
@@ -218,6 +258,7 @@ export class DatabaseManager {
             result: result || {},
             timestamp: toolCall.timestamp || Date.now(),
         });
+        if (this.persist) this.persistToolHistoryToDisk();
     }
 
     public getMCPToolHistory(serverId: string, limit: number = 50): any[] {
@@ -242,5 +283,10 @@ export class DatabaseManager {
         this.mcpServers.clear();
         this.mcpToolHistory = [];
         this.logger.info('In-memory database cleared');
+        // Persist final state before exit if persistence enabled
+        if (this.persist) {
+            this.persistServersToDisk();
+            this.persistToolHistoryToDisk();
+        }
     }
 }
