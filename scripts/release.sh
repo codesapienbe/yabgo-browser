@@ -61,6 +61,15 @@ fi
 
 echo "Creating and pushing tag: $VERSION"
 
+# Attempt to sync package.json (and VERSION) before tagging so package.json.version matches the release
+if command -v node >/dev/null 2>&1; then
+  echo "Syncing package.json and VERSION to $VERSION..."
+  # Use the bump script shipped in scripts/; it strips a leading 'v' if present
+  node "$(dirname "$0")/bump-version.js" "$VERSION" || echo "Warning: bump-version failed, continuing..."
+else
+  echo "Node not available; skipping package.json bump"
+fi
+
 git tag "$VERSION"
 git push origin "$VERSION"
 

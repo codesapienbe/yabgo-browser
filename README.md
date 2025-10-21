@@ -147,6 +147,51 @@ In 2025, your data is often worth more than the software itself. We've chosen a 
 - "Tell me about Mars"
 - "Show me trending tech news"
 
+### Invoking MCP tools (examples)
+
+The assistant can invoke external tools (MCP servers) using the syntax:
+
+`@servername toolname [key=value ...]`
+
+You can also pass arguments in a short, space-separated form. Here are practical examples using the default MCP servers bundled with YABGO:
+
+- Brave Search (quick web search):
+
+```
+@brave search query=typescript
+```
+
+- Filesystem (read a file):
+
+```
+@filesystem read path=/home/user/notes/todo.txt
+```
+
+- Git (search repositories):
+
+```
+@git search-repos query=yabgo language=typescript sort=stars
+```
+
+- Time (convert or query current time):
+
+```
+@time now timezone=Europe/Amsterdam
+@time convert from=UTC to=Europe/Amsterdam 2025-10-21T12:00:00Z
+```
+
+- Memory (store or retrieve a short note):
+
+```
+@memory put key=idea value="Add dark mode toggle"
+@memory get key=idea
+```
+
+Notes
+- Some tools require explicit permissions (sharing page content, history, or selections). Manage these per-server in Settings → MCP Servers.
+- Tool argument formats vary by server; use the server's documentation or the MCP Integration guide for detailed syntax and examples.
+- For more advanced usage (JSON payloads, streaming responses, or tool discovery), see docs/MCP_INTEGRATION.md and docs/DEFAULT_MCP_SERVERS.md.
+
 ### Gesture Controls
 
 **Swipe Navigation**

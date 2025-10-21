@@ -38,5 +38,5 @@ run: install
 	@echo "Starting YABGO Browser in dev mode..."
 	npm run dev
 
-release:
+release:install build
 	@./scripts/release.sh || true
