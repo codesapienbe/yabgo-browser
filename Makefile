@@ -1,11 +1,12 @@
-.PHONY: build test clean install release help
+.PHONY: build test clean install release deploy sign help
 
 help:
 	@echo "YABGO Browser - Available Make Targets"
 	@echo ""
 	@echo "Building:"
 	@echo "  make build        	- Build the application locally"
-	@echo "  make sign   		- Sign AppImage with GPG"
+	@echo "  make deploy       	- Build Linux AppImage for distribution"
+	@echo "  make sign   		- Build and sign AppImage with GPG"
 	@echo "  make release      	- Create release distribution"
 	@echo ""
 	@echo "Maintenance:"
@@ -21,7 +22,12 @@ build: install
 	@echo "Building YABGO Browser locally..."
 	npm run build
 
-sign:
+deploy:
+	@echo "Building Linux AppImage for distribution..."
+	npx electron-builder --linux AppImage --x64 --publish never
+
+sign: deploy
+	@echo "Signing AppImage with GPG..."
 	npm run build:sign
 
 test:

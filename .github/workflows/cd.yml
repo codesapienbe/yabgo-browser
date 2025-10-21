@@ -1,4 +1,4 @@
-name: Build and Release
+name: CD - Build and Release
 
 on:
   push:
@@ -30,14 +30,17 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.20.0"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build application (Linux + Windows)
-        run: npm run build
+      - name: Build application
+        run: |
+          npm run build
+          echo "🏗️ Building distribution packages..."
+          npx electron-builder --linux --win --x64 --publish never
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
