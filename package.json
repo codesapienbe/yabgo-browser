@@ -4,14 +4,14 @@
   "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant and MCP integration",
   "main": "dist/main/main.js",
   "scripts": {
-    "build": "bash scripts/build.sh",
+    "build": "echo 'Cleaning build artifacts...' && rm -rf dist release && echo 'Compiling TypeScript...' && npx tsc -p tsconfig.json && echo 'Bundling with webpack...' && npx webpack --mode production && npm run copy:assets",
     "build:store": "bash scripts/build-store.sh",
     "build:sign": "bash scripts/sign-appimage.sh",
-    "start": "bash scripts/start.sh",
-    "dev": "bash scripts/dev.sh",
-    "test": "bash scripts/test.sh",
-    "clean": "bash scripts/clean.sh",
-    "copy:assets": "bash scripts/copy-assets.sh"
+    "start": "npx electron .",
+    "dev": "npm run build && npm start",
+    "test": "npx jest",
+    "clean": "echo 'Cleaning build artifacts...' && rimraf dist release .cache .parcel-cache .npm .yarn npm-debug.log* yarn-debug.log* yarn-error.log* && echo 'Clean complete!'",
+    "copy:assets": "echo 'Copying assets...' && mkdir -p dist && cp src/renderer/index.html dist/ && cp src/renderer/styles.css dist/ && cp -r assets dist/assets || true && echo 'Assets copied!'"
   },
   "keywords": [
     "electron",

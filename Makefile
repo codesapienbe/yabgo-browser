@@ -14,15 +14,12 @@ help:
 	@echo "  make clean        	- Clean build artifacts"
 	@echo ""
 
-install:
-	npm install
+install: clean
+	npm install --include=dev
 
-# Ensure install runs before build so devDependencies (typescript, webpack, etc.) are present
 build: install
 	@echo "Building YABGO Browser locally..."
 	npm run build
-	@echo "Installing production dependencies..."
-	npm ci --only=production
 
 sign:
 	npm run build:sign
@@ -31,12 +28,13 @@ test:
 	npm run test
 
 clean:
-	npm run clean
+	@echo "Cleaning build artifacts..."
+	rm -rf dist release .cache .parcel-cache .npm .yarn npm-debug.log* yarn-debug.log* yarn-error.log*
+	@echo "Clean complete!"
 
-# Run the application in development mode. Ensure devDependencies are installed first
-run: install
+run:
 	@echo "Starting YABGO Browser in dev mode..."
 	npm run dev
 
-release:install build
+release: build
 	@./scripts/release.sh || true
