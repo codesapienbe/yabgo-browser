@@ -142,8 +142,12 @@ Signing / Notarization notes:
 - Linux AppImage signing: a helper script exists at `scripts/sign-appimage.sh` (GPG signing).
 
 CI & GitHub Releases:
-- For automated cross-platform builds and publishing to GitHub Releases, create a CI workflow (we recommend GitHub Actions) that runs `npm run dist` on `macos-latest`, `windows-latest` and `ubuntu-latest` runners and uploads artifacts.
-- Provide `GH_TOKEN` for publishing releases and keep signing secrets in repository secrets.
+- This repository uses a **single consolidated GitHub Actions workflow** to run tests and build/publish cross-platform installers: `.github/workflows/ci-cd.yml`.
+- The workflow runs tests on pull requests and pushes to `master`, and builds artifacts + publishes Releases when tags are pushed (tags like `v1.2.3`).
+- Required repository secrets for signing/notarization when publishing from CI:
+  - `GITHUB_TOKEN` (automatically available, used for release publishing)
+  - `APPLE_ID` and `APPLE_ID_PASSWORD` (for macOS notarization)
+  - `CSC_LINK` and `CSC_KEY_PASSWORD` (for Windows code signing)
 
 #### ✅ Testing builds locally
 - Linux AppImage: make it executable (`chmod +x`) and run it (`./YABGO-Browser.AppImage`).

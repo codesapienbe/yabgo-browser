@@ -1,0 +1,159 @@
+name: CI & CD - Test, Build, Release
+
+on:
+  push:
+    branches: [master]
+    tags:
+      - 'v*'
+      - '*.*.*'
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test (unit & build)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.20.0]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test
+      - name: Build application (quick check)
+        run: npm run build
+
+  validate-build:
+    name: Validate build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.20.0"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate build process
+        run: |
+          echo "🔍 Validating build process..."
+          npm run build
+          echo "✅ Build validation successful"
+
+  build-linux:
+    name: Build Linux artifacts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and package (linux)
+        run: npm run dist:linux || npm run dist
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yabgo-linux
+          path: release/*
+
+  build-windows:
+    name: Build Windows artifacts
+    runs-on: windows-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and package (windows)
+        run: npm run dist:win || npm run dist
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yabgo-windows
+          path: release/*
+
+  build-macos:
+    name: Build macOS artifacts
+    runs-on: macos-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    env:
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      CSC_LINK: ${{ secrets.CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and package (mac)
+        run: npm run dist:mac || npm run dist
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yabgo-macos
+          path: release/*
+
+  create-release:
+    name: Create GitHub Release (tag)
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    permissions:
+      contents: write
+    steps:
+      - name: Download linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: yabgo-linux
+          path: artifacts/linux || |
+
+      - name: Download windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: yabgo-windows
+          path: artifacts/windows || |
+
+      - name: Download mac artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: yabgo-macos
+          path: artifacts/macos || |
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/linux/*
+            artifacts/windows/*
+            artifacts/macos/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
