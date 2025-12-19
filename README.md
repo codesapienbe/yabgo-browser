@@ -114,6 +114,42 @@ In 2025, your data is often worth more than the software itself. We've chosen a 
 **From App Stores**:
 - **Microsoft Store**: Search for "YABGO Browser" (signed & verified)
 
+### 🔧 Building installers (local)
+If you want to build native installers for each platform locally, use the included electron-builder configuration.
+
+Requirements:
+- Node.js (LTS) and npm
+- Developer certificates for code signing (see notes below)
+
+Local build commands:
+- Build everything (produces installers in `release/`):
+
+  ```bash
+  npm ci
+  npm run dist
+  ```
+
+- Platform-specific builds:
+  - macOS: `npm run dist:mac` (creates `.dmg` / `.pkg` depending on mac config)
+  - Windows: `npm run dist:win` (creates `nsis` installer)
+  - Linux: `npm run dist:linux` (creates `AppImage`)
+
+- Produce unpacked directory (useful for debugging): `npm run pack`
+
+Signing / Notarization notes:
+- macOS notarization requires an Apple Developer account. Export Apple credentials or set `APPLE_ID` and `APPLE_PASSWORD` environment variables for CI/notarization.
+- Windows signing requires a code signing certificate. Provide certificate via `CSC_LINK` and `CSC_KEY_PASSWORD` (or use a PFX file locally with `electron-builder` options).
+- Linux AppImage signing: a helper script exists at `scripts/sign-appimage.sh` (GPG signing).
+
+CI & GitHub Releases:
+- For automated cross-platform builds and publishing to GitHub Releases, create a CI workflow (we recommend GitHub Actions) that runs `npm run dist` on `macos-latest`, `windows-latest` and `ubuntu-latest` runners and uploads artifacts.
+- Provide `GH_TOKEN` for publishing releases and keep signing secrets in repository secrets.
+
+#### ✅ Testing builds locally
+- Linux AppImage: make it executable (`chmod +x`) and run it (`./YABGO-Browser.AppImage`).
+- macOS: open the generated `.dmg` or mount and copy the `.app` into `Applications` to test.
+- Windows: run the NSIS installer on a Windows machine (VM/BootCamp/Parallels).
+
 ---
 
 ## 🎮 How to Use YABGO
