@@ -1,6 +1,6 @@
 {
   "name": "yabgo-browser",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Yet Another Browser to Go and Visit - A minimal, gesture-driven Chromium browser with AI assistant and MCP integration",
   "main": "dist/main/main.js",
   "scripts": {
@@ -154,7 +154,8 @@
     "mac": {
       "category": "public.app-category.productivity",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "identity": null
     }
   }
 }

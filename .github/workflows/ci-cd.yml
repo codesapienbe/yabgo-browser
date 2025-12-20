@@ -89,7 +89,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
