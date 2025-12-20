@@ -34,38 +34,17 @@ jobs:
       - name: Build application (quick check)
         run: npm run build
 
-  validate-build:
-    name: Validate build
-    needs: test
-    runs-on: ubuntu-latest
-    # Only run full validation on pull requests, tag pushes (releases), or manual workflow runs.
-    # This avoids performing costly builds on every simple push to main.
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22.20.0"
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Validate build process
-        run: |
-          echo "🔍 Validating build process..."
-          npm run build
-          echo "✅ Build validation successful"
-
   build-linux:
     name: Build Linux artifacts
+    needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22.20.0'
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -79,14 +58,15 @@ jobs:
 
   build-windows:
     name: Build Windows artifacts
+    needs: test
     runs-on: windows-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22.20.0'
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -100,8 +80,9 @@ jobs:
 
   build-macos:
     name: Build macOS artifacts
+    needs: test
     runs-on: macos-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     env:
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
@@ -112,7 +93,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22.20.0'
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -128,7 +109,7 @@ jobs:
     name: Create GitHub Release (tag)
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     steps:
