@@ -2,13 +2,14 @@ import { MCPServerConfig } from '../../types/mcp.types';
 
 /**
  * Default MCP servers that are pre-configured for generic users
- * These servers provide commonly useful functionality out of the box
+ * These servers are bundled with the app for reliable operation without external dependencies
  */
 export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = [
     {
         name: 'Filesystem',
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-filesystem', process.env.HOME || '/home'],
+        command: 'node', // Will be resolved to bundled server
+        args: [process.env.HOME || '/home'], // Server-specific args (allowed directory)
+        bundledServer: 'filesystem',
         enabled: true,
         supervise: true,
         permissions: {
@@ -20,8 +21,9 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
     },
     {
         name: 'Memory',
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-memory'],
+        command: 'node',
+        args: [],
+        bundledServer: 'memory',
         enabled: true,
         supervise: true,
         permissions: {
@@ -32,39 +34,10 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         },
     },
     {
-        name: 'Brave Search',
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-brave-search'],
-        env: {
-            // Users will need to set BRAVE_API_KEY environment variable
-            BRAVE_API_KEY: process.env.BRAVE_API_KEY || '',
-        },
-        enabled: false, // Disabled by default as it requires API key
-        supervise: true,
-        permissions: {
-            shareHistory: false,
-            sharePageContent: true,
-            shareSelections: true,
-            allowedDomains: [],
-        },
-    },
-    {
         name: 'Everything',
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-everything'],
-        enabled: true,
-        supervise: true,
-        permissions: {
-            shareHistory: false,
-            sharePageContent: false,
-            shareSelections: false,
-            allowedDomains: [],
-        },
-    },
-    {
-        name: 'Starter',
-        command: 'npx',
-        args: ['-y', 'mcp-starter'],
+        command: 'node',
+        args: [],
+        bundledServer: 'everything',
         enabled: true,
         supervise: true,
         permissions: {
@@ -76,8 +49,9 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
     },
     {
         name: 'SequentialThinking',
-        command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
+        command: 'node',
+        args: [],
+        bundledServer: 'sequential-thinking',
         enabled: true,
         supervise: true,
         permissions: {
@@ -118,4 +92,3 @@ export function shouldInitializeDefaults(existingServers: MCPServerConfig[]): bo
     // Don't initialize if user already has default servers
     return !hasAnyDefault;
 }
-

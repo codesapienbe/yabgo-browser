@@ -12,6 +12,9 @@ export interface MCPServerConfig {
     supervise?: boolean;
     // Optional working directory for the server process
     cwd?: string;
+    // If set, this server uses a bundled MCP package instead of external command
+    // Value should be one of: 'filesystem', 'memory', 'everything', 'sequential-thinking'
+    bundledServer?: string;
     permissions: MCPPermissions;
     createdAt: number;
     lastUsed?: number;

@@ -5,6 +5,7 @@ import { spawn, ChildProcessWithoutNullStreams, SpawnOptions } from 'child_proce
 import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import SupervisedStdioTransport from './SupervisedStdioTransport';
+import { resolveBundledServer, isBundledServer, type BundledServerName } from '../utils/MCPServerResolver';
 import type { MCPServerConfig, MCPToolCall, MCPToolResult } from '../../types/mcp.types.js';
 import type { Tool, Resource } from '@modelcontextprotocol/sdk/types.js';
 
@@ -105,16 +106,34 @@ export class MCPClientManager extends EventEmitter {
 
             if (config.supervise) {
                 try {
+                    let command = config.command;
+                    let args = config.args || [];
+
+                    // Handle bundled MCP servers
+                    if (config.bundledServer && isBundledServer(config.bundledServer)) {
+                        const serverPath = resolveBundledServer(config.bundledServer as BundledServerName);
+                        if (serverPath) {
+                            // Use Electron's embedded Node.js to run the bundled server
+                            command = process.execPath;
+                            args = [serverPath, ...args];
+                            console.log(`[MCP] Using bundled server: ${config.bundledServer} at ${serverPath}`);
+                        } else {
+                            throw new Error(`Bundled server ${config.bundledServer} not found`);
+                        }
+                    }
+
                     const extendedEnv = {
                         ...process.env,
                         PATH: getExtendedPath(),
+                        // Required for Electron to run as Node.js
+                        ELECTRON_RUN_AS_NODE: config.bundledServer ? '1' : undefined,
                         ...(config.env || {})
                     };
-                    childProcess = spawn(config.command, config.args || [], {
+                    childProcess = spawn(command, args, {
                         env: extendedEnv,
                         cwd: config.cwd || undefined,
                         stdio: ['pipe', 'pipe', 'pipe'],
-                        shell: getShellForOS()
+                        shell: config.bundledServer ? false : getShellForOS()
                     } as SpawnOptions) as ChildProcessWithoutNullStreams;
 
                     // attach logging for child stdout/stderr and forward stderr to MCP error events
