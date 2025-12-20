@@ -1,10 +1,23 @@
 import { EventEmitter } from 'events';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, ChildProcessWithoutNullStreams, SpawnOptions } from 'child_process';
 import SupervisedStdioTransport from './SupervisedStdioTransport';
 import type { MCPServerConfig, MCPToolCall, MCPToolResult } from '../../types/mcp.types.js';
 import type { Tool, Resource } from '@modelcontextprotocol/sdk/types.js';
+
+/**
+ * Get the appropriate shell for the current OS
+ */
+function getShellForOS(): string | boolean {
+    if (process.platform === 'win32') {
+        return true; // Use default Windows shell (cmd or PowerShell)
+    } else if (process.platform === 'darwin') {
+        return '/bin/zsh';
+    } else {
+        return '/bin/bash';
+    }
+}
 
 /**
  * Manages MCP client connections and tool execution
@@ -37,8 +50,8 @@ export class MCPClientManager extends EventEmitter {
                         env: { ...process.env, ...(config.env || {}) },
                         cwd: config.cwd || undefined,
                         stdio: ['pipe', 'pipe', 'pipe'],
-                        shell: true
-                    }) as ChildProcessWithoutNullStreams;
+                        shell: getShellForOS()
+                    } as SpawnOptions) as ChildProcessWithoutNullStreams;
 
                     // attach logging for child stdout/stderr and forward stderr to MCP error events
                     if (childProcess.stdout) {
