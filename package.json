@@ -104,11 +104,11 @@
           ]
         }
       ],
-      "signingHashAlgorithms": [
-        "sha256"
-      ],
-      "signDlls": true,
-      "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      "signtoolOptions": {
+        "signingHashAlgorithms": ["sha256"],
+        "signDlls": true,
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      }
     },
     "linux": {
       "target": [
@@ -125,10 +125,12 @@
       "synopsis": "Modern gesture-driven web browser",
       "description": "Yet Another Browser to Go and Visit - A lightning-fast, gesture-driven web browser with AI assistant and MCP integration",
       "desktop": {
-        "Name": "YABGO Browser",
-        "Comment": "Yet Another Browser to Go and Visit",
-        "Categories": "Network;WebBrowser;",
-        "MimeType": "text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;"
+        "entry": {
+          "Name": "YABGO Browser",
+          "Comment": "Yet Another Browser to Go and Visit",
+          "Categories": "Network;WebBrowser;",
+          "MimeType": "text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;"
+        }
       }
     },
     "nsis": {
