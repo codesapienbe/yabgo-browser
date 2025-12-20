@@ -34,10 +34,10 @@ export class MCPClientManager extends EventEmitter {
             if (config.supervise) {
                 try {
                     childProcess = spawn(config.command, config.args || [], {
-                        env: { ...(config.env || {}) },
+                        env: { ...process.env, ...(config.env || {}) },
                         cwd: config.cwd || undefined,
                         stdio: ['pipe', 'pipe', 'pipe'],
-                        shell: false
+                        shell: true
                     }) as ChildProcessWithoutNullStreams;
 
                     // attach logging for child stdout/stderr and forward stderr to MCP error events

@@ -10,6 +10,7 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         command: 'npx',
         args: ['-y', '@modelcontextprotocol/server-filesystem', process.env.HOME || '/home'],
         enabled: true,
+        supervise: true,
         permissions: {
             shareHistory: false,
             sharePageContent: false,
@@ -22,6 +23,7 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         command: 'npx',
         args: ['-y', '@modelcontextprotocol/server-memory'],
         enabled: true,
+        supervise: true,
         permissions: {
             shareHistory: true,
             sharePageContent: false,
@@ -38,6 +40,7 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
             BRAVE_API_KEY: process.env.BRAVE_API_KEY || '',
         },
         enabled: false, // Disabled by default as it requires API key
+        supervise: true,
         permissions: {
             shareHistory: false,
             sharePageContent: true,
@@ -50,6 +53,7 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         command: 'npx',
         args: ['-y', '@modelcontextprotocol/server-everything'],
         enabled: true,
+        supervise: true,
         permissions: {
             shareHistory: false,
             sharePageContent: false,
@@ -62,6 +66,7 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         command: 'npx',
         args: ['-y', 'mcp-starter'],
         enabled: true,
+        supervise: true,
         permissions: {
             shareHistory: false,
             sharePageContent: false,
@@ -74,6 +79,7 @@ export const DEFAULT_MCP_SERVERS: Omit<MCPServerConfig, 'id' | 'createdAt'>[] = 
         command: 'npx',
         args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
         enabled: true,
+        supervise: true,
         permissions: {
             shareHistory: false,
             sharePageContent: false,
