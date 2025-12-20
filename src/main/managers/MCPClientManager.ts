@@ -2,6 +2,8 @@ import { EventEmitter } from 'events';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { spawn, ChildProcessWithoutNullStreams, SpawnOptions } from 'child_process';
+import { existsSync, readdirSync } from 'fs';
+import { join } from 'path';
 import SupervisedStdioTransport from './SupervisedStdioTransport';
 import type { MCPServerConfig, MCPToolCall, MCPToolResult } from '../../types/mcp.types.js';
 import type { Tool, Resource } from '@modelcontextprotocol/sdk/types.js';
@@ -17,6 +19,63 @@ function getShellForOS(): string | boolean {
     } else {
         return '/bin/bash';
     }
+}
+
+/**
+ * Build an extended PATH that includes common Node.js installation locations.
+ * This is needed because non-interactive shells don't source profile files.
+ */
+function getExtendedPath(): string {
+    const home = process.env.HOME || '';
+    const existingPath = process.env.PATH || '';
+    const additionalPaths: string[] = [];
+
+    // Common paths for Node.js installations
+    const candidatePaths = [
+        '/usr/local/bin',
+        '/opt/homebrew/bin',  // Homebrew on Apple Silicon
+        join(home, '.local', 'bin'),
+        join(home, '.volta', 'bin'),  // Volta
+        join(home, '.bun', 'bin'),    // Bun
+    ];
+
+    // Check for nvm installations - find the latest node version
+    const nvmDir = join(home, '.nvm', 'versions', 'node');
+    if (existsSync(nvmDir)) {
+        try {
+            const versions = readdirSync(nvmDir).filter(v => v.startsWith('v')).sort().reverse();
+            if (versions.length > 0) {
+                candidatePaths.push(join(nvmDir, versions[0], 'bin'));
+            }
+        } catch {
+            // Ignore errors reading nvm directory
+        }
+    }
+
+    // Check for fnm installations
+    const fnmDir = join(home, '.fnm', 'node-versions');
+    if (existsSync(fnmDir)) {
+        try {
+            const versions = readdirSync(fnmDir).filter(v => v.startsWith('v')).sort().reverse();
+            if (versions.length > 0) {
+                candidatePaths.push(join(fnmDir, versions[0], 'installation', 'bin'));
+            }
+        } catch {
+            // Ignore errors reading fnm directory
+        }
+    }
+
+    // Add paths that exist and aren't already in PATH
+    for (const p of candidatePaths) {
+        if (existsSync(p) && !existingPath.includes(p)) {
+            additionalPaths.push(p);
+        }
+    }
+
+    if (additionalPaths.length > 0) {
+        return [...additionalPaths, existingPath].join(':');
+    }
+    return existingPath;
 }
 
 /**
@@ -46,8 +105,13 @@ export class MCPClientManager extends EventEmitter {
 
             if (config.supervise) {
                 try {
+                    const extendedEnv = {
+                        ...process.env,
+                        PATH: getExtendedPath(),
+                        ...(config.env || {})
+                    };
                     childProcess = spawn(config.command, config.args || [], {
-                        env: { ...process.env, ...(config.env || {}) },
+                        env: extendedEnv,
                         cwd: config.cwd || undefined,
                         stdio: ['pipe', 'pipe', 'pipe'],
                         shell: getShellForOS()
