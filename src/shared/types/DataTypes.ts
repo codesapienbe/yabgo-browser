@@ -54,6 +54,8 @@ export interface NavigationEntry {
 export interface AppSettings {
     theme: 'light' | 'dark' | 'auto';
     defaultSearchEngine: string;
+    /** Optional default GitHub repository used by URL shortcuts in the form 'owner/repo' */
+    githubDefaultRepo?: string;
     gesturesEnabled: boolean;
     floatingUIEnabled: boolean;
     autoHideTimeout: number;
