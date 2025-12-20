@@ -119,19 +119,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: yabgo-linux
-          path: artifacts/linux || |
+          path: artifacts/linux
 
       - name: Download windows artifacts
         uses: actions/download-artifact@v4
         with:
           name: yabgo-windows
-          path: artifacts/windows || |
+          path: artifacts/windows
 
       - name: Download mac artifacts
         uses: actions/download-artifact@v4
         with:
           name: yabgo-macos
-          path: artifacts/macos || |
+          path: artifacts/macos
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
