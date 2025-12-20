@@ -2,12 +2,12 @@ name: CI & CD - Test, Build, Release
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags:
       - 'v*'
       - '*.*.*'
   pull_request:
-    branches: [master]
+    branches: [main]
   workflow_dispatch: {}
 
 permissions:
@@ -38,6 +38,9 @@ jobs:
     name: Validate build
     needs: test
     runs-on: ubuntu-latest
+    # Only run full validation on pull requests, tag pushes (releases), or manual workflow runs.
+    # This avoids performing costly builds on every simple push to main.
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
