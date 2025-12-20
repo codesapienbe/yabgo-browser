@@ -133,13 +133,17 @@ jobs:
           name: yabgo-macos
           path: artifacts/macos
 
+      - name: List artifacts
+        run: find artifacts -type f | head -50
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/linux/*
-            artifacts/windows/*
-            artifacts/macos/*
+            artifacts/linux/*.AppImage
+            artifacts/windows/*.exe
+            artifacts/macos/*.dmg
+            artifacts/macos/*.zip
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
