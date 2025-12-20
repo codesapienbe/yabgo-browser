@@ -814,6 +814,9 @@ body {
 }
 
 /* MCP Settings Styles */
+.form-group label { display:block; font-weight:600; margin-bottom:6px; }
+.form-group input[type="text"] { width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; }
+.form-group .btn-primary { margin-right:8px; }
 .settings-btn:hover {
     background: rgba(139, 92, 246, 0.8);
     color: white;

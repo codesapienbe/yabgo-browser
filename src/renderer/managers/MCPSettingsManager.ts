@@ -1,6 +1,7 @@
-import { EventEmitter } from '../utils/EventEmitter';
-import { mcpBridge } from '../bridge/mcp.bridge';
+import { URLHelper } from '../../shared/utils/URLHelper';
 import type { MCPServerConfig } from '../../types/mcp.types';
+import { mcpBridge } from '../bridge/mcp.bridge';
+import { EventEmitter } from '../utils/EventEmitter';
 
 /**
  * Manages MCP settings UI and server configuration
@@ -76,6 +77,20 @@ export class MCPSettingsManager extends EventEmitter {
         // Indicator click to open settings
         this.indicator?.addEventListener('click', () => {
             this.showSettingsModal();
+        });
+
+        // GitHub shortcuts save/clear handlers
+        document.getElementById('githubSaveBtn')?.addEventListener('click', () => {
+            this.saveGithubDefaultRepoFromUI();
+        });
+
+        document.getElementById('githubClearBtn')?.addEventListener('click', () => {
+            const input = document.getElementById('githubDefaultRepo') as HTMLInputElement | null;
+            if (input) input.value = '';
+            // remove setting
+            try { window.localStorage.removeItem('github.defaultRepo'); } catch {}
+            URLHelper.configureDefaultRepo(null);
+            this.showSuccess('GitHub default repo cleared');
         });
 
         // Listen for server events from MCP
@@ -213,6 +228,8 @@ export class MCPSettingsManager extends EventEmitter {
         if (this.settingsModal) {
             this.settingsModal.classList.remove('hidden');
             this.loadServers(); // Refresh server list
+            // Load GitHub shortcut setting into UI
+            this.loadGithubDefaultRepoToUI();
             // Start periodic status updater (every 5s)
             if (!this.statusInterval) {
                 this.statusInterval = window.setInterval(() => {
@@ -496,6 +513,35 @@ export class MCPSettingsManager extends EventEmitter {
         console.error('[MCP Settings]', message);
         // TODO: Implement proper toast notification
         alert(`Error: ${message}`);
+    }
+
+    private loadGithubDefaultRepoToUI(): void {
+        try {
+            const val = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage.getItem('github.defaultRepo') : null;
+            const input = document.getElementById('githubDefaultRepo') as HTMLInputElement | null;
+            if (input) input.value = val || '';
+        } catch (err) {
+            // ignore failures
+        }
+    }
+
+    private saveGithubDefaultRepoFromUI(): void {
+        const input = document.getElementById('githubDefaultRepo') as HTMLInputElement | null;
+        if (!input) return;
+        const val = input.value.trim();
+        try {
+            if (val) {
+                window.localStorage.setItem('github.defaultRepo', val);
+                URLHelper.configureDefaultRepo(val);
+                this.showSuccess('GitHub default repo saved');
+            } else {
+                window.localStorage.removeItem('github.defaultRepo');
+                URLHelper.configureDefaultRepo(null);
+                this.showSuccess('GitHub default repo cleared');
+            }
+        } catch (err) {
+            this.showError('Failed to save setting');
+        }
     }
 
     private showSuccess(message: string): void {
