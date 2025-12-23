@@ -23,6 +23,16 @@ mkdir -p "$OUT_DIR/assets"
 cp -f "scripts/templates/style.css" "$OUT_DIR/assets/style.css"
 cp -f "scripts/templates/logo.svg" "$OUT_DIR/assets/logo.svg"
 
+# If the release includes an icon.png, copy it into assets and OVERWRITE logo.svg so the site uses the original icon everywhere
+if [ -f "$RELEASE_DIR/icon.png" ]; then
+  echo "Found release icon at $RELEASE_DIR/icon.png — using it as site logo"
+  cp -f "$RELEASE_DIR/icon.png" "$OUT_DIR/assets/icon-${VERSION}.png"
+  cp -f "$RELEASE_DIR/icon.png" "$OUT_DIR/assets/logo.svg"
+  ICON_PATH="/assets/logo.svg"
+else
+  ICON_PATH="/assets/logo.svg"
+fi
+
 # Helper to produce human readable size and sha256
 human_size() {
   if command -v numfmt >/dev/null 2>&1; then
