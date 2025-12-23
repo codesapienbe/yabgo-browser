@@ -27,7 +27,11 @@
     "keystore:encode": "bash ./scripts/encode-keystore.sh release.keystore --copy",
     "keystore:props": "bash ./scripts/make-keystore-properties.sh",
     "check:secrets": "bash ./scripts/check-for-secrets.sh",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "release": "bash ./scripts/release.sh",
+    "release:patch": "bash ./scripts/release.sh patch --push",
+    "release:minor": "bash ./scripts/release.sh minor --push",
+    "release:major": "bash ./scripts/release.sh major --push"
   },
   "keywords": [
     "electron",
