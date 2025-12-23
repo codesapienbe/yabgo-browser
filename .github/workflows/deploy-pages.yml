@@ -1,0 +1,54 @@
+name: Deploy GitHub Pages Releases
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download release assets
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          echo "Downloading release assets for $RELEASE_TAG"
+          gh release download "$RELEASE_TAG" --dir assets --repo "${{ github.repository }}"
+          ls -lah assets || true
+
+      - name: Generate pages
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          rm -rf site || true
+          mkdir -p site
+          ./scripts/generate-pages.sh "$RELEASE_TAG" assets site
+          # Copy release.js into site root (generator writes it)
+          cp site/release.js site/ || true
+          ls -lah site || true
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_dir: ./site
+          user_name: 'github-actions'
+          user_email: 'actions@github.com'
