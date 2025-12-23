@@ -83,6 +83,7 @@ Thumbs.db
 tmp/
 temp/release.keystore
 android/keystores/
+android/keystore.properties
 release.keystore
 
 # Keystore helpers/scripts (do not commit private signing material)

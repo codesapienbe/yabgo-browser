@@ -1,6 +1,8 @@
 {
-  "appId": "com.yabgo.browser",
+  "appId": "io.codesapienbe.yabgo",
   "appName": "YABGO Browser",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "server": {
+    "androidScheme": "https"
+  }
 }
