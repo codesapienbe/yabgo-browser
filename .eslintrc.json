@@ -9,16 +9,17 @@
   ],
   "extends": [
     "eslint:recommended",
-    "@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended"
   ],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "off",
     "prefer-const": "error",
-    "no-var": "error"
+    "no-var": "error",
+    "no-empty": ["error", { "allowEmptyCatch": true }]
   },
   "env": {
     "node": true,
-    "electron": true
+    "browser": true
   }
 }

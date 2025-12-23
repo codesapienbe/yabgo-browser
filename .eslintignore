@@ -1,0 +1,5 @@
+dist/
+android/
+android/app/src/main/assets/
+node_modules/
+build/

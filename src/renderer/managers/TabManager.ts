@@ -1,8 +1,8 @@
-import { EventEmitter } from '../utils/EventEmitter';
 import { Tab, TabCreationOptions } from '../../shared/types/DataTypes';
 import { Logger } from '../../shared/utils/Logger';
 import { URLHelper } from '../../shared/utils/URLHelper';
 import { mcpBridge } from '../bridge/mcp.bridge';
+import { EventEmitter } from '../utils/EventEmitter';
 
 /**
  * Tab state cache interface for storing tab DOM and state
@@ -194,7 +194,7 @@ export class TabManager extends EventEmitter {
                     const nodeName = node.nodeName.toLowerCase();
                     if(nodeName === '#text'){
                         const txt = node.textContent || '';
-                        return txt.replace(/\s+/g,' ').trim();
+                        return txt.replace(/\\s+/g,' ').trim();
                     }
                     if(['script','style','noscript'].includes(nodeName)) return '';
                     if(nodeName.match(/^h[1-6]$/)){

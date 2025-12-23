@@ -2,13 +2,15 @@
  * Simple event emitter implementation for a renderer process
  */
 
+type Callback = (...args: any[]) => void;
+
 export class EventEmitter {
-    private events: Map<string, Function[]> = new Map();
+    private events: Map<string, Callback[]> = new Map();
 
     /**
      * Add event listener
      */
-    public on(event: string, callback: Function): void {
+    public on(event: string, callback: Callback): void {
         if (!this.events.has(event)) {
             this.events.set(event, []);
         }
@@ -18,8 +20,8 @@ export class EventEmitter {
     /**
      * Add one-time event listener
      */
-    public once(event: string, callback: Function): void {
-        const onceCallback = (...args: any[]) => {
+    public once(event: string, callback: Callback): void {
+        const onceCallback: Callback = (...args: any[]) => {
             callback(...args);
             this.off(event, onceCallback);
         };
@@ -29,7 +31,7 @@ export class EventEmitter {
     /**
      * Remove event listener
      */
-    public off(event: string, callback: Function): void {
+    public off(event: string, callback: Callback): void {
         const callbacks = this.events.get(event);
         if (callbacks) {
             const index = callbacks.indexOf(callback);

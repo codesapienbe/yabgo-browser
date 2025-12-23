@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import fs from 'fs';
 import * as path from 'path';
 import { WindowConfig } from '../../shared/types/WindowTypes';
 import { Logger } from '../../shared/utils/Logger';
@@ -28,9 +29,9 @@ export class WindowManager {
             const devPath = path.join(__dirname, '..', '..', 'assets', process.platform === 'darwin' ? 'app.icns' : 'app.ico');
             try {
                 // Prefer packaged asset when available
-                if (require('fs').existsSync(possiblePackaged)) return possiblePackaged;
+                if (fs.existsSync(possiblePackaged)) return possiblePackaged;
             } catch (e) {
-                // ignore
+                // ignore errors when checking for packaged asset
             }
             // Fallback to project assets during development
             return devPath;

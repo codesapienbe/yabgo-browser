@@ -146,7 +146,7 @@ export class URLHelper {
             if (!repoField) return null;
 
             const url = typeof repoField === 'string' ? repoField : (repoField.url || '');
-            const m = /github.com[:\/]([^\/]+)\/([^\/]+)(?:\.git)?/i.exec(url);
+            const m = new RegExp('github.com[:/]([^/]+)/([^/]+)(?:\\.git)?', 'i').exec(url);
             if (!m) return null;
             return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
         } catch {

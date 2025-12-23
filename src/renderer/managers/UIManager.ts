@@ -1,7 +1,7 @@
-import { EventEmitter } from '../utils/EventEmitter';
+import { marked } from 'marked';
 import { Logger } from '../../shared/utils/Logger';
 import { URLHelper } from '../../shared/utils/URLHelper';
-import { marked } from 'marked';
+import { EventEmitter } from '../utils/EventEmitter';
 
 /**
  * Manages UI interactions and state
@@ -515,7 +515,7 @@ export class UIManager extends EventEmitter {
      * Show reader overlay with markdown content
      */
     public async showReader(markdown: string): Promise<void> {
-        let overlay = document.getElementById('readerOverlay') as HTMLElement | null;
+        const overlay = document.getElementById('readerOverlay') as HTMLElement | null;
         if (!overlay) return;
 
         // Parse markdown to HTML
