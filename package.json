@@ -13,6 +13,8 @@
     "start": "npx electron . --no-sandbox",
     "dev": "npm run build && npm start",
     "test": "npx jest",
+    "lint": "eslint . --ext .ts,.tsx && tsc --noEmit",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "clean": "echo 'Cleaning build artifacts...' && rimraf dist release .cache .parcel-cache .npm .yarn npm-debug.log* yarn-debug.log* yarn-error.log* && echo 'Clean complete!'",
     "copy:assets": "echo 'Copying assets...' && mkdir -p dist && cp src/renderer/index.html dist/ && cp src/renderer/styles.css dist/ && cp -r assets dist/assets || true && echo 'Assets copied!'",
     "cap:init": "npx cap init \"YABGO Browser\" io.codesapienbe.yabgo --web-dir=dist",
