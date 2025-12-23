@@ -61,13 +61,21 @@ if [ -f "$RELEASE_DIR/icon.png" ]; then
   ICON_PATH="/assets/${ICON_BASENAME}"
 fi
 
-# Insert assets list
+# Insert assets list (robust and verbose for debugging)
+echo "Listing files in $RELEASE_DIR"
+ls -la "$RELEASE_DIR" || true
+files=( "$RELEASE_DIR"/* )
+echo "Found ${#files[@]} entries in $RELEASE_DIR"
 ASSETS_HTML=""
-for f in "$RELEASE_DIR"/*; do
-  [ -f "$f" ] || continue
+for f in "${files[@]}"; do
+  if [ ! -f "$f" ]; then
+    echo "Skipping non-file: $f"
+    continue
+  fi
   base=$(basename "$f")
   echo "Processing asset: $base"
-  size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+  # Use portable size calculation
+  size=$(wc -c < "$f" 2>/dev/null || echo 0)
   hsize=$(human_size "$size")
   sha=$(sha256_of "$f")
   # Determine platform by name
