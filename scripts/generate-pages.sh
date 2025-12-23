@@ -61,6 +61,38 @@ if [ -f "$RELEASE_DIR/icon.png" ]; then
   ICON_PATH="/assets/${ICON_BASENAME}"
 fi
 
+# Insert assets list
+ASSETS_HTML=""
+for f in "$RELEASE_DIR"/*; do
+  [ -f "$f" ] || continue
+  base=$(basename "$f")
+  echo "Processing asset: $base"
+  size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+  hsize=$(human_size "$size")
+  sha=$(sha256_of "$f")
+  # Determine platform by name
+  plat="File"
+  if echo "$base" | grep -qi "\.apk$\|apk"; then plat="Android"; fi
+  if echo "$base" | grep -qi "\.appimage$\|appimage"; then plat="Linux"; fi
+  if echo "$base" | grep -qi "\.dmg$\|\.pkg$\|mac"; then plat="macOS"; fi
+  if echo "$base" | grep -qi "\.exe$\|windows\|msi"; then plat="Windows"; fi
+
+  ASSETS_HTML+=$(cat <<ITEM
+  <div class="asset">
+    <div class="asset-info">
+      <div><strong>${base}</strong><div class="asset-meta">${plat} • ${hsize} • SHA256: <code style="font-family:var(--mono);">${sha}</code></div></div>
+    </div>
+    <div>
+      <a class="btn" href="${base}" download>Download</a>
+      <a class="btn secondary" href="${base}">Direct</a>
+    </div>
+  </div>
+ITEM
+)
+
+done
+
+# Now write the release page (avoid sed / in-place edits for portability)
 cat > "$RELEASE_DIR/index.html" <<HTML
 <!doctype html>
 <html lang="en">
@@ -87,7 +119,7 @@ cat > "$RELEASE_DIR/index.html" <<HTML
       </div>
 
       <div class="asset-list">
-        <!-- ASSETS -->
+${ASSETS_HTML}
       </div>
     </div>
 
