@@ -89,10 +89,14 @@ jobs:
         name: yabgo-android-apk
         path: android/app/build/outputs/apk/release/*.apk
 
-    - name: Create Release (optional)
+    - name: Create GitHub Release from changelog
       if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
       env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Ensure node deps are available for the release helper
+        npm ci || npm install
+        # Create (or overwrite) release from CHANGELOG using our helper
+        npm run release:gh -- --overwrite "${{ github.ref_name }}"
+      shell: bash
