@@ -13,7 +13,7 @@ npm run build
 echo "Copying assets to Android project (Capacitor)..."
 # Try to add the platform if missing (does nothing if platform exists)
 if [ ! -d "android" ]; then
-  npx cap init com.yabgo.browser yabgo-browser --web-dir=dist || true
+  npx cap init "YABGO Browser" io.codesapienbe.yabgo --web-dir=dist || true
   npx cap add android || true
 fi
 npx cap copy
