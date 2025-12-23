@@ -31,7 +31,10 @@
     "release": "bash ./scripts/release.sh",
     "release:patch": "bash ./scripts/release.sh patch --push",
     "release:minor": "bash ./scripts/release.sh minor --push",
-    "release:major": "bash ./scripts/release.sh major --push"
+    "release:major": "bash ./scripts/release.sh major --push",
+    "release:gh": "bash ./scripts/create-gh-release.sh",
+    "release:gh:publish": "bash ./scripts/create-gh-release.sh --overwrite",
+    "release:gh:draft": "bash ./scripts/create-gh-release.sh --draft --overwrite"
   },
   "keywords": [
     "electron",
