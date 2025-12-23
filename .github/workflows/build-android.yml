@@ -117,9 +117,17 @@ jobs:
           echo "No APKs found to upload; skipping"
           exit 0
         fi
+        VERSION="${RELEASE_TAG#v}"
         for apk in "${files[@]}"; do
           echo "Uploading $apk to release $RELEASE_TAG"
-          gh release upload "$RELEASE_TAG" "$apk" --clobber --repo "${{ github.repository }}"
+          dir=$(dirname "$apk")
+          base=$(basename "$apk" .apk)
+          newname="$base-$VERSION.apk"
+          tmp="$dir/$newname"
+          cp "$apk" "$tmp"
+          echo "Uploading as $newname"
+          gh release upload "$RELEASE_TAG" "$tmp" --clobber --repo "${{ github.repository }}"
+          rm -f "$tmp"
         done
       shell: bash
 
@@ -146,8 +154,16 @@ jobs:
           echo "No downloaded APK artifacts found to upload; skipping"
           exit 0
         fi
+        VERSION="${RELEASE_TAG#v}"
+        TMPDIR=$(mktemp -d)
         for apk in "${files[@]}"; do
           echo "Uploading $apk to release $RELEASE_TAG"
-          gh release upload "$RELEASE_TAG" "$apk" --clobber --repo "${{ github.repository }}"
+          base=$(basename "$apk" .apk)
+          newname="$base-$VERSION.apk"
+          tmp="$TMPDIR/$newname"
+          cp "$apk" "$tmp"
+          echo "Uploading as $newname"
+          gh release upload "$RELEASE_TAG" "$tmp" --clobber --repo "${{ github.repository }}"
         done
+        rm -rf "$TMPDIR"
       shell: bash
