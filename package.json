@@ -15,16 +15,19 @@
     "test": "npx jest",
     "clean": "echo 'Cleaning build artifacts...' && rimraf dist release .cache .parcel-cache .npm .yarn npm-debug.log* yarn-debug.log* yarn-error.log* && echo 'Clean complete!'",
     "copy:assets": "echo 'Copying assets...' && mkdir -p dist && cp src/renderer/index.html dist/ && cp src/renderer/styles.css dist/ && cp -r assets dist/assets || true && echo 'Assets copied!'",
-
-    "cap:init": "npx cap init com.yabgo.browser yabgo-browser --web-dir=dist",
+    "cap:init": "npx cap init \"YABGO Browser\" io.codesapienbe.yabgo --web-dir=dist",
     "cap:add:android": "npx cap add android",
+    "cap:install:android": "npm install @capacitor/android@^5.0.0",
+    "cap:ensure:android": "npm run cap:install:android && npm run cap:add:android",
     "cap:copy": "npx cap copy",
     "cap:sync": "npx cap sync",
     "cap:open:android": "npx cap open android",
     "build:android": "npm run build && npm run cap:copy_and_sync && echo 'Now open Android Studio with `npx cap open android` to build the release APK'",
     "cap:copy_and_sync": "npx cap copy && npx cap sync android",
     "keystore:encode": "bash ./scripts/encode-keystore.sh release.keystore --copy",
-    "keystore:props": "bash ./scripts/make-keystore-properties.sh"
+    "keystore:props": "bash ./scripts/make-keystore-properties.sh",
+    "check:secrets": "bash ./scripts/check-for-secrets.sh",
+    "prepare": "husky install"
   },
   "keywords": [
     "electron",
@@ -50,6 +53,9 @@
     "url": "https://github.com/codesapienbe/yabgo-browser/issues"
   },
   "devDependencies": {
+    "@capacitor/android": "^5.7.8",
+    "@capacitor/cli": "^5.0.0",
+    "@capacitor/core": "^5.0.0",
     "@types/electron": "^1.6.10",
     "@types/jest": "^29.5.8",
     "@types/jsdom": "^27.0.0",
@@ -69,9 +75,7 @@
     "wait-on": "^7.2.0",
     "webpack": "^5.102.1",
     "webpack-cli": "^6.0.1",
-
-    "@capacitor/cli": "^5.0.0",
-    "@capacitor/core": "^5.0.0"
+    "husky": "^8.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.1",
@@ -122,7 +126,9 @@
         }
       ],
       "signtoolOptions": {
-        "signingHashAlgorithms": ["sha256"],
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
         "rfc3161TimeStampServer": "http://timestamp.digicert.com"
       }
     },

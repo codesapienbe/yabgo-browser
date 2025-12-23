@@ -13,9 +13,18 @@ npm run build
 2. Initialize Capacitor (first time only)
 
 ```bash
-npm run cap:init
+# Install the platform that matches this project's Capacitor core (5.x):
+npm run cap:install:android
+# or install manually:
+npm install @capacitor/android@^5.0.0
+
+# Then add the Android platform to the project:
+npm run cap:add:android
+# or using npx:
+npx cap add android
 ```
 
+Note: If you want the latest Capacitor (8.x), you'll need to upgrade `@capacitor/core` and `@capacitor/cli` first — otherwise installing `@capacitor/android@8` will conflict with core 5.x.
 3. Add Android platform (first time only)
 
 ```bash
@@ -134,6 +143,18 @@ Security note
 
 - **Do NOT commit** the keystore or `android/keystore.properties` to your repository. This project already ignores `release.keystore` and `android/keystores/` via `.gitignore`.
 - For CI, paste the base64 into `KEYSTORE_BASE64` secret and set the other secrets; the workflow decodes the keystore at build time and uses the secret values only during the run.
+
+Pre-commit & CI secret checks ✅
+
+- A pre-commit hook (Husky) and a GitHub Actions job (`Secret scan`) are included to prevent accidental commits of signing keys or secret values.
+- To enable Husky locally, run:
+
+```bash
+npm run prepare
+# then you can commit as usual; pre-commit will run `npm run check:secrets`.
+```
+
+- The CI `Secret scan` workflow runs on pushes and pull requests and will fail if suspicious files or secret-like content are detected.
 
 ### Example workflow
 See `.github/workflows/build-android.yml` in this repo. It runs on tag pushes (`v*`) and can be triggered manually (workflow_dispatch).
