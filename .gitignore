@@ -81,4 +81,11 @@ Thumbs.db
 
 # Temporary files
 tmp/
-temp/
+temp/release.keystore
+android/keystores/
+release.keystore
+
+# Keystore helpers/scripts (do not commit private signing material)
+/scripts/encode-keystore.sh
+/scripts/make-keystore-properties.sh
+android/keystore.properties

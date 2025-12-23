@@ -524,5 +524,11 @@ Every contribution helps make YABGO better! 🎉
 
 ---
 
+## 📱 Android / Mobile
+
+This repo includes a Capacitor scaffold to package the renderer as an Android app. See `docs/ANDROID.md` for step-by-step instructions (build, Capacitor commands, and F‑Droid guidance).
+
+---
+
 **Last Updated**: October 2025  
 **Built with** ❤️ **by the Codesapien Network**

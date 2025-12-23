@@ -1,0 +1,23 @@
+Title: YABGO Browser
+Summary: Minimal, gesture-driven Chromium browser with AI assistant
+License: MIT
+Source:
+  Vcs: git
+  Url: https://github.com/codesapienbe/yabgo-browser.git
+  Tag: v{version}
+Build:
+  - gradle
+  - script: |
+      # Ensure web assets are built and copied before Gradle runs (distro builders should execute this)
+      npm ci
+      npm run build
+      npx cap copy
+Gradle:
+  Subdir: android
+  BuildCommand: assembleRelease
+AutoUpdateMode: tags
+IssueTracker: https://github.com/codesapienbe/yabgo-browser/issues
+Notes: |
+  This project uses Capacitor to wrap a web app located in `dist/`.
+  Before F-Droid can build the app, ensure the `android/` Gradle project exists in the repository (run `npm run cap:add:android` locally, then commit the generated `android/` folder).
+  Avoid proprietary Google Play services or closed-source SDKs to remain eligible for F‑Droid.

@@ -1,0 +1,6 @@
+{
+  "appId": "com.yabgo.browser",
+  "appName": "YABGO Browser",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
