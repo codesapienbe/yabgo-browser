@@ -153,24 +153,29 @@ if [ ! -f "$OUT_DIR/index.html" ]; then
 HTML
 fi
 
-# Add or update the release link in release.js (idempotent)
-JS_POST="(function(){\n  const root=document.getElementById('releases-root'); if(!root) return;\n  const li=document.createElement('div'); li.innerHTML=\"<div class='release-card'><div class='release-head'><div class='release-title'>%VERSION%</div><div class='small'>Tag: %VERSION%</div></div><div class='asset-list'>\";\n  // fetch assets list and inject links (server-side already created pages)\n  li.innerHTML+=\"<div style='margin-top:12px'><a class='btn' href='./releases/%VERSION%/'>Open release page</a></div></div></div>\";\n  root.insertBefore(li, root.firstChild);\n})();"
+# Add or update the release link in release.js (idempotent and robust)
+ENTRY_MARKER="<!-- RELEASE_ENTRY ${VERSION} -->"
+ENTRY="${ENTRY_MARKER}
+(function(){
+  const root=document.getElementById('releases-root'); if(!root) return;
+  const div=document.createElement('div');
+  div.innerHTML = '<div class="release-card"><div class="release-head"><div class="release-title">${VERSION}</div><div class="small">Tag: ${VERSION}</div></div><div class="asset-list"><div style="margin-top:12px"><a class="btn" href="./releases/${VERSION}/">Open release page</a></div></div></div>';
+  root.insertBefore(div, root.firstChild);
+})();
+"
 
-if grep -q "release.js" "$OUT_DIR/release.js" 2>/dev/null; then
-  # remove any existing entry for this version
-  tmp=$(mktemp)
-  sed "s/%VERSION%/${VERSION}/g" <<< "$JS_POST" > "$tmp"
-  # Append to release.js so it populates the list on load
-  cat "$tmp" >> "$OUT_DIR/release.js"
-  rm -f "$tmp"
-else
-  # create a basic release.js
+# Ensure release.js exists
+if [ ! -f "$OUT_DIR/release.js" ]; then
   cat > "$OUT_DIR/release.js" <<'JS'
 (function(){
   const root=document.getElementById('releases-root'); if(!root) return;
 })();
 JS
-  sed -i "1i $(sed 's/\/\/.*$//g' <<< "$JS_POST" | sed 's/"/\"/g')" "$OUT_DIR/release.js" || true
+fi
+
+# Append entry only if not present (idempotent)
+if ! grep -Fq "$ENTRY_MARKER" "$OUT_DIR/release.js" 2>/dev/null; then
+  printf "%s\n" "$ENTRY" >> "$OUT_DIR/release.js"
 fi
 
 echo "Generated pages for ${VERSION} in ${RELEASE_DIR}"
