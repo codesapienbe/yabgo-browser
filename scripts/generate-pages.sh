@@ -43,29 +43,37 @@ sha256_of() {
 }
 
 # Build per-release HTML
-cat > "$RELEASE_DIR/index.html" <<'HTML'
+# If the release supplies an icon (site/releases/<tag>/icon.png), copy it into site assets and use it
+ICON_PATH="/assets/logo.svg"
+if [ -f "$RELEASE_DIR/icon.png" ]; then
+  ICON_BASENAME="icon-${VERSION}.png"
+  cp -f "$RELEASE_DIR/icon.png" "$OUT_DIR/assets/${ICON_BASENAME}"
+  ICON_PATH="/assets/${ICON_BASENAME}"
+fi
+
+cat > "$RELEASE_DIR/index.html" <<HTML
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YABGO Browser - Release %VERSION%</title>
+  <title>YABGO Browser - Release ${VERSION}</title>
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo"><img src="/assets/logo.svg" alt="logo" width="36"></div>
+      <div class="logo"><img src="${ICON_PATH}" alt="logo" width="36"></div>
       <div>
         <div class="title">YABGO Browser</div>
-        <div class="subtitle">Download assets for release %VERSION%</div>
+        <div class="subtitle">Download assets for release ${VERSION}</div>
       </div>
     </div>
 
     <div class="release-card">
       <div class="release-head">
-        <div class="release-title">Release %VERSION%</div>
-        <div class="small">Tag: %VERSION%</div>
+        <div class="release-title">Release ${VERSION}</div>
+        <div class="small">Tag: ${VERSION}</div>
       </div>
 
       <div class="asset-list">
