@@ -29,7 +29,8 @@ jobs:
         node-version: 20
 
     - name: Install npm deps
-      run: npm ci
+      run: |
+        npm ci || npm install
 
     - name: Build web assets
       run: npm run build
